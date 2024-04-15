@@ -1,3 +1,1 @@
-Describe how, if at all, you used generative AI to assist with completing this homework.  Recall that you cannot use generative AI to write your SQL queries, but can use it to explain concepts or assist with coding. Please see the statement on generative AI at the top of the homework writeup.
-
-Answer here:
+记得每次提交先在自己的branch 提交，核对后提交pull request
