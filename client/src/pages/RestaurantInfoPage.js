@@ -1,70 +1,65 @@
-import {useEffect, useState} from 'react';
-import {Box, Container, Button} from '@mui/material';
-import {NavLink, Link} from 'react-router-dom';
-import {useLocation} from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { Container, Box, Button, Typography } from '@mui/material';
 
-const config = require('../config.json');
-const restaurants = require('../data/restaurant.json');
 export default function RestaurantInfoPage() {
+    const { restaurant_id } = useParams(); // Ensure this matches the dynamic segment in your route
+    const navigate = useNavigate();
     const [restaurantInfo, setRestaurantInfo] = useState({
-        name: 'Restaurant Name', // Placeholder name
-        address: 'Address', // Placeholder address
-        overallScore: 'TODO: define overall score', // Placeholder overall score
-        inspectionScore: 'X?', // Placeholder inspection score
-        securityScore: 'X?', // Placeholder security score
+        name: 'Loading...', // Default loading state
+        address: 'Loading...',
+        overallScore: 'Loading...',
+        inspectionScore: 'Loading...',
+        securityScore: 'Loading...'
     });
 
-
-    const location = useLocation();
-    const queryParams = new URLSearchParams(location.search);
-    const restaurant_id = queryParams.get('id');
-
-    for (let restaurant of restaurants) {
-        if (parseInt(restaurant.id) === parseInt(restaurant_id)) {
-            restaurantInfo.name = restaurant.name
-            restaurantInfo.address = restaurant.address
-            restaurantInfo.overallScore = Math.floor(Math.random() * 101)
-            restaurantInfo.inspectionScore = Math.floor(Math.random() * 101)
-            restaurantInfo.securityScore = Math.floor(Math.random() * 101)
-        }
-    }
-
-    // Placeholder effect for fetching restaurant info
-    // useEffect(() => {
-    //   fetch(/* API endpoint */)
-    //     .then(res => res.json())
-    //     .then(resJson => setRestaurantInfo(resJson));
-    // }, []);
+    useEffect(() => {
+        // Fetch the restaurant data from the API
+        fetch(`/api/restaurants/${restaurant_id}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                setRestaurantInfo({
+                    name: data.name,
+                    address: data.address,
+                    overallScore: data.overallScore,
+                    inspectionScore: data.inspectionScore,
+                    securityScore: data.securityScore
+                });
+            })
+            .catch(error => {
+                console.error('Failed to fetch restaurant data:', error);
+                navigate('/not-found'); // Redirect or handle error
+            });
+    }, [restaurant_id, navigate]);
 
     return (
         <Container>
-            <Box sx={{my: 4, p: 2, border: '1px solid #ccc', borderRadius: '8px'}}>
-                <h1>{restaurantInfo.name}</h1>
-                <p>{restaurantInfo.address}</p>
-                <p>Overall Restaurant Score: {restaurantInfo.overallScore}</p>
-                <p>Inspection Score: {restaurantInfo.inspectionScore}</p>
-                <p>Security Score: {restaurantInfo.securityScore}</p>
-                <div>
-                    <Link to={`/securityreport/${restaurant_id}`}>
-                        <Button variant="contained" color="primary" sx={{my: 1}}>
-                            Check Security Report
-                        </Button>
-                    </Link>
-                </div>
-                <div>
-                    <Link to={`/inspectionreport/${restaurant_id}`}>
-                        <Button variant="contained" color="primary" sx={{my: 1}}>
-                            Check Inspection Report
-                        </Button>
-                    </Link>
-                </div>
-                <div>
-                    <Link to={`/nearbyrestaurant`}>
-                        <Button variant="contained" color="secondary" sx={{my: 1}}>
-                            Check Nearby Better Restaurant
-                        </Button>
-                    </Link>
-                </div>
+            <Box sx={{ my: 4, p: 2, border: '1px solid #ccc', borderRadius: '8px' }}>
+                <Typography variant="h4">{restaurantInfo.name}</Typography>
+                <Typography>{restaurantInfo.address}</Typography>
+                <Typography>Overall Restaurant Score: {restaurantInfo.overallScore}</Typography>
+                <Typography>Inspection Score: {restaurantInfo.inspectionScore}</Typography>
+                <Typography>Security Score: {restaurantInfo.securityScore}</Typography>
+                <Link to={`/securityreport/${restaurant_id}`} style={{ textDecoration: 'none' }}>
+                    <Button variant="contained" color="primary" sx={{ my: 1 }}>
+                        Check Security Report
+                    </Button>
+                </Link>
+                <Link to={`/inspectionreport/${restaurant_id}`} style={{ textDecoration: 'none' }}>
+                    <Button variant="contained" color="primary" sx={{ my: 1 }}>
+                        Check Inspection Report
+                    </Button>
+                </Link>
+                <Link to="/nearbyrestaurant" style={{ textDecoration: 'none' }}>
+                    <Button variant="contained" color="secondary" sx={{ my: 1 }}>
+                        Check Nearby Better Restaurant
+                    </Button>
+                </Link>
             </Box>
         </Container>
     );
