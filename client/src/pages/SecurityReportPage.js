@@ -1,74 +1,83 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Container, Box, Paper, Stack, Typography, Divider, List, ListItem, ListItemText } from '@mui/material';
-
-import SongCard from '../components/SongCard';
-import { formatDuration, formatReleaseDate } from '../helpers/formatter';
-const config = require('../config.json');
+import { Container, Box, Paper, Typography, Button, Menu, MenuItem, Divider, useTheme } from '@mui/material';
 
 export default function SecurityReportPage() {
   const { restaurant_id } = useParams();
-
+  const theme = useTheme(); // Access theme to adapt to light/dark mode dynamically
   const [restaurantInfo, setRestaurantInfo] = useState({
-    name: 'Restaurant Name', // Placeholder name
-    address: 'Address', // Placeholder address
-    securityScore: 'X?', // Placeholder security score
-    // Additional restaurant data goes here
+    name: 'Restaurant Name',
+    address: 'Address',
+    securityScore: 'Pending', // Placeholder security score
   });
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectedDistance, setSelectedDistance] = useState('');
 
-  // This placeholder data array could hold information regarding filters or statistics
-  const [filters, setFilters] = useState([
-    // Example filter item
-    { name: 'Distance', options: ['< 1 km', '1-5 km', '5-10 km'] },
-  ]);
-
-  // Placeholder effect for fetching restaurant info
-  // useEffect(() => {
-  //   fetch(/* API endpoint */)
-  //     .then(res => res.json())
-  //     .then(resJson => setRestaurantInfo(resJson));
-  // }, [restaurant_id]);
-
-  // Placeholder for a function to apply a filter
-  // You'll need to implement this based on how your data is structured
-  const applyFilter = (filter) => {
-    console.log(`Applying filter: ${filter}`);
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
   };
 
+  const handleDistanceSelect = (distance) => {
+    setSelectedDistance(distance);
+    setAnchorEl(null);
+    // Simulate fetching security details based on distance
+    // Placeholder for actual fetching logic
+  };
+
+  useEffect(() => {
+    // Placeholder for actual fetching logic
+  }, [restaurant_id]);
+
   return (
-    <Container sx={{ display: 'flex', flexDirection: 'row', pt: 4 }}>
-      {/* Filters Sidebar */}
+    <Container sx={{ display: 'flex', flexDirection: 'row', pt: 4, bgcolor: theme.palette.background.default }}>
       <Box width="20%" minWidth="150px">
-        <Typography variant="h6" sx={{ mb: 2 }}>Filters</Typography>
-        <List>
-          {filters.map((filter, index) => (
-            <ListItem button key={index} onClick={() => applyFilter(filter.name)}>
-              <ListItemText primary={filter.name} />
-            </ListItem>
+        <Button
+          aria-controls="distance-menu"
+          aria-haspopup="true"
+          onClick={handleClick}
+          sx={{ my: 2, width: '100%', bgcolor: theme.palette.background.paper, '&:hover': { bgcolor: theme.palette.action.hover } }}
+        >
+          Select Distance
+        </Button>
+        <Typography variant="body1" sx={{ mb: 2, color: theme.palette.text.secondary }}>
+          {selectedDistance ? `Selected: ${selectedDistance}` : 'No distance selected'}
+        </Typography>
+        <Menu
+          id="distance-menu"
+          anchorEl={anchorEl}
+          keepMounted
+          open={Boolean(anchorEl)}
+          onClose={() => setAnchorEl(null)}
+        >
+          {['0.5 miles', '1 mile', '5 miles', '10 miles'].map((distance, index) => (
+            <MenuItem key={index} onClick={() => handleDistanceSelect(distance)}>
+              {distance}
+            </MenuItem>
           ))}
-        </List>
+        </Menu>
       </Box>
 
-      {/* Main Content Area */}
       <Box width="80%" sx={{ ml: 2 }}>
-        <Paper elevation={3} sx={{ p: 3 }}>
-          <Typography variant="h4">{restaurantInfo.name}</Typography>
-          <Typography variant="subtitle1">{restaurantInfo.address}</Typography>
-          <Typography variant="body1">Security Score: {restaurantInfo.securityScore}</Typography>
+        <Paper elevation={3} sx={{ p: 3, bgcolor: theme.palette.background.paper }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 1, fontSize: '1.5rem', fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif' }}>
+            {restaurantInfo.name}
+          </Typography>
+          <Typography variant="subtitle1" sx={{ mb: 2, fontSize: '1.25rem' }}>
+            {restaurantInfo.address}
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 2, fontWeight: 500, fontSize: '1rem', color: theme.palette.text.secondary }}>
+            Security Score: {restaurantInfo.securityScore}
+          </Typography>
           <Divider sx={{ my: 2 }} />
-          <Typography variant="h6">Statistics</Typography>
-          {/* Todo list here */}
-          <List>
-            <ListItem>
-              <ListItemText primary="Todo: Need a filter searching page? (based on different year?)" />
-            </ListItem>
-            <ListItem>
-              <ListItemText primary="Todo: List crimes?" />
-            </ListItem>
-            {/* More todos can be added here */}
-          </List>
+
+          {selectedDistance && (
+            <Typography variant="body2" sx={{ mt: 2, color: theme.palette.text.primary }}>
+              Security details for {selectedDistance} will be displayed here.
+            </Typography>
+          )}
         </Paper>
       </Box>
     </Container>
   );
 }
+
