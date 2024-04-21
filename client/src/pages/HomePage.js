@@ -3,16 +3,16 @@ import { Container, Stack, TextField, Button, Typography, Card, CardContent, Pag
 import SearchIcon from '@mui/icons-material/Search';
 import { NavLink } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import { useThemeContext } from '../components/themeContext';
 
 import LazyTable from '../components/LazyTable';
 import SongCard from '../components/SongCard';
 const config = require('../config.json');
 
 export default function RestaurantSearchPage() {
+  const {themeMode } = useThemeContext();
   const [searchInput, setSearchInput] = useState('');
-  const [searchResults, setSearchResults] = useState([
-    { id: 1, restaurantName: 'Dummy Restaurant', overallScore: 5 }
-  ]);
+  const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -23,26 +23,31 @@ export default function RestaurantSearchPage() {
   const goToRestaurantInfo = (restaurantId) => {
     navigate(`/restaurant/${restaurantId}`);
   };
-
+  
 
   const handleSearch = async (page = 1) => {
     setLoading(true);
-    const pageSize = 10; // 每页结果数量
-
+    const pageSize = 10;
     try {
-      const response = await fetch(`/search?searchStr=${encodeURIComponent(searchInput)}&page=${page}&pageSize=${pageSize}`);
+      const response = await fetch(`/searchRestaurant?searchStr=${encodeURIComponent(searchInput)}&page=${page}&pageSize=${pageSize}`);
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-      const data = await response.json();
-      setSearchResults(data.results);
-      setTotalPages(data.totalPages); // 假设后端返回了总页数
+      const data = await response.json(); 
+      setSearchResults(data.restaurants);
+      setTotalPages(data.totalPages);
       setCurrentPage(page);
     } catch (error) {
       console.error('Failed to fetch restaurants:', error);
     } finally {
       setLoading(false);
     }
+  };
+  const formatTitle = (name) => {
+    return name
+      .split(' ')
+      .map((word) => word.charAt(0).toLocaleUpperCase() + word.slice(1).toLocaleLowerCase())
+      .join(' ');
   };
 
   const handlePageChange = (event, value) => {
@@ -80,29 +85,36 @@ export default function RestaurantSearchPage() {
             Search
           </Button>
         </Stack>
-
+  
         {loading ? <Typography>Loading...</Typography> :
           <>
-          <Stack spacing={2} sx={{ maxHeight: 400, overflowY: 'auto', mt: 2 }}>
-            {searchResults.length > 0 ? searchResults.map((result, index) => (
-              <Card key={index} sx={{ mb: 1 }} onClick={() => goToRestaurantInfo(result.id)}>
-                <CardContent>
-                  <Typography variant="h6" sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}>
-                    {result.restaurantName}
+            <Stack spacing={2} sx={{ maxHeight: 500, overflowY: 'auto', mt: 2 }}>
+              {searchResults.length > 0 ? searchResults.map((restaurant) => (
+                <Card key={restaurant.restaurant_id} sx={{ mb: 1, overflow: 'visible' }} onClick={() => goToRestaurantInfo(restaurant.restaurant_id)}>
+                  <CardContent sx={{ display: 'flex', alignItems: 'center', minHeight: 80 }}>
+                  <Typography variant="h6" noWrap sx={{
+                    textTransform: 'capitalize',
+                    textDecoration: 'underline',
+                    color: themeMode === 'dark' ? 'white' : 'blue',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    }
+                  }}>
+                    {formatTitle(restaurant.restaurant_name)}
                   </Typography>
-                  <Typography color="textSecondary">Score: {result.overallScore}</Typography>
-                </CardContent>
-              </Card>
-            )) : (
-              <Typography sx={{ textAlign: 'center', my: 2 }}>
-                No restaurants found. Try a different query.
-              </Typography>
-            )}
-          </Stack>
+                  </CardContent>
+                </Card>
+              )) : (
+                <Typography sx={{ textAlign: 'center', my: 2 }}>
+                  No restaurants found. Try a different query.
+                </Typography>
+              )}
+            </Stack>
             <Pagination count={totalPages} page={currentPage} onChange={handlePageChange} sx={{ display: searchResults.length ? 'flex' : 'none', justifyContent: 'center', mt: 2 }} />
           </>
         }
       </Stack>
     </Container>
   );
-}
+}  

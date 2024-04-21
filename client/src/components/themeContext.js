@@ -84,18 +84,16 @@ export function useThemeContext() {
 }
 
 export const ThemeProviderWrapper = ({ children }) => {
-  const [mode, setMode] = useState('light');
+  const [themeMode, setMode] = useState('light'); 
 
   const toggleTheme = () => {
     setMode(prevMode => (prevMode === 'light' ? 'dark' : 'light'));
   };
 
-  const theme = useMemo(() => {
-    return createTheme(mode === 'light' ? lightThemeOptions : darkThemeOptions);
-  }, [mode]);
+  const theme = useMemo(() => createTheme(themeMode === 'light' ? lightThemeOptions : darkThemeOptions), [themeMode]);
 
   return (
-    <ThemeContext.Provider value={{ toggleTheme }}>
+    <ThemeContext.Provider value={{themeMode, toggleTheme }}> 
       <ThemeProvider theme={theme}>
         {children}
       </ThemeProvider>
