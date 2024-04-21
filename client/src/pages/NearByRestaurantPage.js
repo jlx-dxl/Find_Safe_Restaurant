@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import { useEffect, useState } from 'react';
 import {
     Container,
     Grid,
@@ -12,64 +12,41 @@ import {
     ListItem,
     ListItemText
 } from '@mui/material';
-import {Link} from 'react-router-dom';
-
-
-const config = require('../config.json');
-const restaurantJson = require('../data/restaurant.json');
+import { Link } from 'react-router-dom';
 
 export default function NearByRestaurantPage() {
     const [restaurants, setRestaurants] = useState([]);
     const [sortType, setSortType] = useState('score');
     const [distanceFilter, setDistanceFilter] = useState(10);
 
+    // Fetch restaurant data when sortType or distanceFilter changes
     useEffect(() => {
-        // TODO: Fetch restaurant data from the server and apply the sort type and distance filter
-        // setRestaurants(fetchedRestaurants);
-    }, [sortType, distanceFilter]);
-
-    const reload = () => {
-        // distanceFilter
-        let randomList = [];
-        const max = restaurantJson.length;
-        while (randomList.length < 10) {
-            let randomNumber = Math.floor(Math.random() * max)
-            if (randomList.includes(randomNumber)) {
-                continue
-            }
-            randomList.push(randomNumber)
-        }
-
-        restaurants.length = 0
-        for (let i in randomList) {
-            restaurants.push({
-                id: restaurantJson[i].id,
-                name: restaurantJson[i].name,
-                score: Math.floor(Math.random() * 100) + 1,
-                distance: Math.floor(Math.random() * distanceFilter) + 1
+        // Simulate fetching data from an API
+        fetch(`/api/restaurants?sortType=${sortType}&distanceFilter=${distanceFilter}`)
+            .then(response => response.json())
+            .then(data => {
+                setRestaurants(data);
             })
-        }
-    }
-
-    reload()
+            .catch(error => console.error('Failed to fetch data:', error));
+    }, [sortType, distanceFilter]);
 
     const handleSortChange = (event) => {
         setSortType(event.target.value);
     };
 
-    const handleDistanceChange = (event, newValue) => {
+    const handleDistanceChange = (event) => {
         setDistanceFilter(event.target.value);
     };
 
-    // Placeholder data structure for list items
-    const restaurantListItems = restaurants.map((restaurant) =>
+    // Render the list of restaurants
+    const restaurantListItems = restaurants.map((restaurant) => (
         <ListItem key={restaurant.id}>
-            <Link  to={`/restaurant?id=${restaurant.id}`} style={{textDecoration: 'none', color: 'inherit'}}>
+            <Link to={`/restaurant?id=${restaurant.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <ListItemText primary={restaurant.name}
-                              secondary={`Distance: ${restaurant.distance} km, Score: ${restaurant.score}`}/>
+                              secondary={`Distance: ${restaurant.distance} km, Score: ${restaurant.score}`} />
             </Link>
         </ListItem>
-    );
+    ));
 
     return (
         <Container>
@@ -77,9 +54,7 @@ export default function NearByRestaurantPage() {
                 {/* Filter Area */}
                 <Grid item xs={3}>
                     <Typography variant="h6">Filters</Typography>
-                    {/* Placeholder for additional filters */}
-                    <Typography>Distances</Typography>
-                    {/* Replace this with a slider if needed */}
+                    {/* Distance Filter */}
                     <FormControl fullWidth>
                         <InputLabel>Distance</InputLabel>
                         <Select
@@ -90,7 +65,6 @@ export default function NearByRestaurantPage() {
                             <MenuItem value={5}>{"< 5 km"}</MenuItem>
                             <MenuItem value={10}>{"< 10 km"}</MenuItem>
                             <MenuItem value={20}>{"< 20 km"}</MenuItem>
-                            {/* Add more options as needed */}
                         </Select>
                     </FormControl>
                 </Grid>
