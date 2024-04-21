@@ -20,8 +20,8 @@ export default function RestaurantSearchPage() {
 
   const navigate = useNavigate();
 
-  const goToRestaurantInfo = (restaurantId) => {
-    navigate(`/restaurant/${restaurantId}`);
+  const goToRestaurantInfo = (restaurant_Id) => {
+    navigate(`/restaurant/${restaurant_Id}`);
   };
   
 
