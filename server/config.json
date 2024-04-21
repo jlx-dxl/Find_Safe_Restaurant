@@ -1,9 +1,9 @@
 {
-  "rds_host": "",
+  "rds_host": "database-penn-cis550.cry8icmkwhu9.us-east-2.rds.amazonaws.com",
   "rds_port": "3306",
-  "rds_user": "",
-  "rds_password": "",
-  "rds_db": "SWIFTIFY",
+  "rds_user": "admin",
+  "rds_password": "upenncis5500",
+  "rds_db": "FOOD_CRIME_CHICAGO",
   "server_host": "localhost",
   "server_port": "8080"
 }
