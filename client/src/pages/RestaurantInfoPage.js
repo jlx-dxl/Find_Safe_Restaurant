@@ -31,10 +31,6 @@ export default function RestaurantInfoPage() {
                     securityScore: data.securityScore
                 });
             })
-            .catch(error => {
-                console.error('Failed to fetch restaurant data:', error);
-                navigate('/not-found'); // Redirect or handle error
-            });
     }, [restaurant_id, navigate]);
 
     return (
