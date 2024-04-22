@@ -6,7 +6,7 @@ import { Pie } from 'react-chartjs-2';
 import 'chart.js/auto';
 
 export default function InspectionReportPage() {
-  const restaurant_id = '123';  // Using a hardcoded restaurant ID for demonstration
+  const {restaurant_id} = useParams();  // Using a hardcoded restaurant ID for demonstration
   const theme = useTheme();
   const [restaurantInfo, setRestaurantInfo] = useState({
     name: 'Loading...',
@@ -30,8 +30,10 @@ export default function InspectionReportPage() {
 
   useEffect(() => {
     fetchRestaurantInfo();
-    // Optionally trigger an initial fetch for the current year if needed
+    fetchInspectionScore();
+    fetchInspectionDetails(2022); // For debugging purposes, remove or replace with dynamic year later
   }, []);
+  
 
   const fetchInspectionScore = () => {
     fetch(`/getInspectionScore?resID=${restaurant_id}`)
@@ -117,29 +119,40 @@ useEffect(() => {
 
   return (
     <Container sx={{ display: 'flex', flexDirection: 'row', pt: 4 }}>
-      <Box width="20%" minWidth="150px">
-        <Button
-          aria-controls="year-menu"
-          aria-haspopup="true"
-          onClick={handleClick}
-          sx={{ my: 2, width: '100%' }}
-        >
-          Select Year
-        </Button>
-        <Menu
-          id="year-menu"
-          anchorEl={anchorEl}
-          keepMounted
-          open={Boolean(anchorEl)}
-          onClose={() => setAnchorEl(null)}
-        >
-          {Array.from({ length: 10 }, (_, i) => 2012 + i).map(year => (
-            <MenuItem key={year} onClick={() => handleYearSelect(year)}>
-              {year}
-            </MenuItem>
-          ))}
-        </Menu>
-      </Box>
+    <Box width="20%" minWidth="150px">
+      <Button
+        aria-controls="year-menu"
+        aria-haspopup="true"
+        onClick={handleClick}
+        sx={{ my: 2, width: '100%', bgcolor: theme.palette.background.paper, '&:hover': { bgcolor: theme.palette.action.hover } }}
+      >
+        Select Year
+      </Button>
+      <Typography
+        variant="subtitle1"
+        sx={{
+          my: 2,
+          fontStyle: 'italic',
+          color: theme.palette.text.secondary,
+          paddingLeft: '16px' // Aligns text with the button text assuming default padding in theme
+        }}
+      >
+        {selectedYear ? `Year: ${selectedYear}` : 'No year selected'}
+      </Typography>
+      <Menu
+        id="year-menu"
+        anchorEl={anchorEl}
+        keepMounted
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+      >
+        {Array.from({ length: 10 }, (_, i) => 2012 + i).map(year => (
+          <MenuItem key={year} onClick={() => handleYearSelect(year)}>
+            {year}
+          </MenuItem>
+        ))}
+      </Menu>
+    </Box>
 
       <Box width="80%" sx={{ ml: 2 }}>
         <Paper elevation={3} sx={{ p: 3 }}>
