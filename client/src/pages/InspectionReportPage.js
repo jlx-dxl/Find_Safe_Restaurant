@@ -84,8 +84,9 @@ const fetchRestaurantInfo = () => {
 };
 
 useEffect(() => {
-    fetchRestaurantInfo();
-    // Remove fetchInspectionDetails if it's only related to other details not the score
+  fetchRestaurantInfo();
+  fetchInspectionScore();
+  fetchInspectionDetails(2022); // For debugging purposes, remove or replace with dynamic year later
 }, []);
 
 
