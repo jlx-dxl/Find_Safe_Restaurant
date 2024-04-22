@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Container, Stack, TextField, Button, Typography, Card, CardContent, Pagination } from '@mui/material';
+import { Box, Container, Stack, TextField, Button, Typography, Card, CardContent, Pagination } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { NavLink } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
@@ -55,66 +55,96 @@ export default function RestaurantSearchPage() {
   };
 
   return (
-    <Container>
-      <Typography
-        variant="h4"
-        component="h1"
-        sx={{
-          textAlign: 'center',
-          my: 4,
-          fontFamily: '"Montserrat", sans-serif',
-          fontWeight: 700,
-          fontSize: { xs: '1.5rem', sm: '2.5rem', md: '3rem' },
-          color: 'primary.main', 
-          textShadow: '1px 1px 2px #000000', 
-        }}
-      >
-        Search for Safe Restaurants
-      </Typography>
-      <Stack spacing={2} sx={{ width: '100%', maxWidth: 600, mx: 'auto', my: 2 }}>
-        <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-          <TextField
-            fullWidth
-            label="Search safe restaurant..."
-            variant="outlined"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyPress={(e) => { if (e.key === 'Enter') handleSearch(); }}
-          />
-          <Button variant="contained" color="primary" startIcon={<SearchIcon />} onClick={() => handleSearch()} disabled={loading}>
-            Search
-          </Button>
-        </Stack>
-  
-        {loading ? <Typography>Loading...</Typography> :
-          <>
+    <Box sx={{
+      ...(themeMode === 'light' ? {
+        backgroundImage: 'url("/chicago-rooftop-restaurants-hero.jpg")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      } : {}),
+      minHeight: '100vh', // Adjust the height of the image as needed
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+    }}>
+      <Container maxWidth="md" sx={{
+        backgroundColor: themeMode === 'dark' ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)',
+        borderRadius: 2,
+        padding: 4,
+        marginTop: 0, // Adjust spacing as needed
+        marginBottom: 8, // Adjust spacing as needed
+        overflow: 'hidden',
+      }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{
+            textAlign: 'center',
+            my: 4,
+            fontFamily: '"Montserrat", sans-serif',
+            fontWeight: 700,
+            fontSize: { xs: '1.5rem', sm: '2.5rem', md: '3rem' },
+            color: themeMode === 'dark' ? 'common.white' : 'primary.main',
+            textShadow: themeMode === 'dark' ? '1px 1px 2px #000000' : 'none',
+          }}
+        >
+          Search for Safe Restaurants
+        </Typography>
+        <Stack spacing={2} sx={{ width: '100%', maxWidth: 600, mx: 'auto', my: 2 }}>
+          <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+            <TextField
+              fullWidth
+              label="Search safe restaurant..."
+              variant="outlined"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyPress={(e) => { if (e.key === 'Enter') handleSearch(); }}
+            />
+            <Button variant="contained" color="primary" startIcon={<SearchIcon />} onClick={() => handleSearch()} disabled={loading}>
+              Search
+            </Button>
+          </Stack>
+          
+          {/* Results */}
+          {loading ? (
+            <Typography>Loading...</Typography>
+          ) : (
             <Stack spacing={2} sx={{ maxHeight: 500, overflowY: 'auto', mt: 2 }}>
-              {searchResults.length > 0 ? searchResults.map((restaurant) => (
-                <Card key={restaurant.restaurant_id} sx={{ mb: 1, overflow: 'visible' }} onClick={() => goToRestaurantInfo(restaurant.restaurant_id)}>
-                  <CardContent sx={{ display: 'flex', alignItems: 'center', minHeight: 80 }}>
-                  <Typography variant="h6" noWrap sx={{
-                    textTransform: 'capitalize',
-                    textDecoration: 'underline',
-                    color: themeMode === 'dark' ? 'white' : 'blue',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      textDecoration: 'underline',
-                    }
-                  }}>
-                    {formatTitle(restaurant.restaurant_name)}
-                  </Typography>
-                  </CardContent>
-                </Card>
-              )) : (
+              {searchResults.length > 0 ? (
+                searchResults.map((restaurant) => (
+                  <Card key={restaurant.restaurant_id} sx={{ mb: 1, overflow: 'visible' }} onClick={() => goToRestaurantInfo(restaurant.restaurant_id)}>
+                    <CardContent sx={{ display: 'flex', alignItems: 'center', minHeight: 80 }}>
+                      <Typography variant="h6" noWrap sx={{
+                        textTransform: 'capitalize',
+                        textDecoration: 'underline',
+                        color: themeMode === 'dark' ? 'common.white' : 'primary.main',
+                        cursor: 'pointer',
+                        '&:hover': {
+                          textDecoration: 'underline',
+                        }
+                      }}>
+                        {formatTitle(restaurant.restaurant_name)}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
                 <Typography sx={{ textAlign: 'center', my: 2 }}>
                   No restaurants found. Try a different query.
                 </Typography>
               )}
             </Stack>
-            <Pagination count={totalPages} page={currentPage} onChange={handlePageChange} sx={{ display: searchResults.length ? 'flex' : 'none', justifyContent: 'center', mt: 2 }} />
-          </>
-        }
-      </Stack>
-    </Container>
+          )}
+
+          {/* Pagination */}
+          <Pagination count={totalPages} page={currentPage} onChange={handlePageChange} sx={{
+            display: searchResults.length ? 'flex' : 'none',
+            justifyContent: 'center',
+            mt: 2,
+            mb: 4, // Adjust bottom spacing as needed
+          }} />
+        </Stack>
+      </Container>
+    </Box>
   );
-}  
+}
