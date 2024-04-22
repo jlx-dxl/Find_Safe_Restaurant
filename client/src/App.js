@@ -20,7 +20,7 @@ export default function App() {
           <Route path="/restaurant/:restaurant_id" element={<RestaurantInfoPage />} />
           <Route path="/securityreport/:restaurant_id" element={<SecurityReportPage />} />
           <Route path="/inspectionreport/:restaurant_id" element={<InspectionReportPage />} />
-          <Route path="/nearbyrestaurant" element={<NearByRestaurantPage />} />
+          <Route path="/nearbyrestaurant/:restaurant_id" element={<NearByRestaurantPage />} />
         </Routes>
       </BrowserRouter>
     </ThemeProviderWrapper>
