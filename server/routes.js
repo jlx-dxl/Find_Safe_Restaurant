@@ -10,6 +10,62 @@ const connection = mysql.createConnection({
 });
 connection.connect((err) => err && console.log(err));
 
+const inspection_score_radius = 0.5
+
+/******************** Internal Functions *******************/
+async function calculateInspectionScore(resID) {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT AVG(s.inspection_score) AS avg_inspection_score
+            FROM restaurant AS r
+            JOIN inspection AS i ON r.restaurant_id = i.restaurant_id
+            JOIN inspection_score AS s ON i.risk_level = s.risk_level AND i.inspection_result = s.inspection_result
+            WHERE r.restaurant_id = ?
+            GROUP BY r.restaurant_name
+        `;
+        connection.query(query, [resID], (err, results) => {
+            if (err) {
+                reject(err);
+            } else if (results.length > 0) {
+                resolve(results[0].avg_inspection_score || 0);
+            } else {
+                resolve(0);
+            }
+        });
+    });
+}
+
+async function calculateDangerScore(resID, radius = inspection_score_radius) {
+    return new Promise((resolve, reject) => {
+        const haversine = `(6371 * acos(cos(radians(restaurant_latitude))
+                         * cos(radians(crime_latitude))
+                         * cos(radians(crime_longitude) - radians(restaurant_longitude))
+                         + sin(radians(restaurant_latitude))
+                         * sin(radians(crime_latitude))))`;
+
+        const query = `
+            SELECT AVG(cr.danger_score) AS average_danger_score
+            FROM crime c
+            JOIN restaurant r ON r.restaurant_id = ?
+            JOIN crime_rank cr ON c.crime_type = cr.crime_type
+                             AND c.if_arrest = cr.if_arrest
+                             AND c.location_description = cr.location_description
+            WHERE ${haversine} < ?
+        `;
+        connection.query(query, [resID, radius], (err, results) => {
+            if (err) {
+                reject(err);
+            } else if (results.length > 0 && results[0].average_danger_score !== null) {
+                resolve(results[0].average_danger_score);
+            } else {
+                resolve(0);  // No crime records found, danger score set to zero.
+            }
+        });
+    });
+}
+/****************** END: Internal Functions *****************/
+
+
 /******************** Main Page *******************/
 /**
  * Route: GET /searchRestaurant
@@ -17,7 +73,6 @@ connection.connect((err) => err && console.log(err));
  * @param {*} req.query.page pageNumber (default to 1)
  * @param {*} req.query.pageSize pageSize (default to 10)
  */
-
 const searchRestaurant = async function (req, res) {
     const { searchStr } = req.query;
     const page = parseInt(req.query.page, 10) || 1;
@@ -95,49 +150,21 @@ const getRestaurantInfo = async function (req, res) {
 const getInspectionScore = async function (req, res) {
     const { resID } = req.query;
 
-    connection.query(`
-        SELECT r.restaurant_id, r.restaurant_name, i.inspection_date, i.risk_level, i.inspection_result, s.inspection_score 
-        FROM restaurant AS r
-        JOIN inspection AS i ON r.restaurant_id = i.restaurant_id
-        JOIN inspection_score AS s ON i.risk_level = s.risk_level and i.inspection_result = s.inspection_result
-        WHERE r.restaurant_id = ?
-    `, [resID], (err, data) => {
-        if (err) {
-            console.log(err);
-            res.status(500).json({ error: '[getInspectionScore]: Query error ' });
-            return;
-        }
-
-        if (data.length > 0) {
-            const scores = {};
-            data.forEach(row => {
-                if (!scores[row.restaurant_id]) {
-                    scores[row.restaurant_id] = {
-                        name: row.restaurant_name,
-                        cnt: 0,
-                        qualityScore: 0,
-                    };
-                }
-
-                scores[row.restaurant_id].qualityScore += row.inspection_score
-                scores[row.restaurant_id].cnt++;
-            });
-            console.log(scores)
-            if (scores[resID].cnt == 0) {
-                res.json({});
-            } else {
-                const avgScore = scores[resID].qualityScore / scores[resID].cnt;
-                res.json({
-                    restaurant_id: resID,
-                    restaurant_name: scores[resID].name,
-                    inspectionScore: avgScore,
-                })
-            }
-
+    try {
+        const avgInspectionScore = await calculateInspectionScore(resID);
+        if (avgInspectionScore === 0) {
+            res.status(404).json({ error: 'Inspection Score not found for the specified restaurant ID' });
         } else {
-            res.status(404).json({ error: 'Inspection Score not found' });
+            res.json({
+                restaurant_id: resID,
+                inspectionScore: avgInspectionScore
+            });
         }
-    });
+    } catch (error) {
+        console.error(`[getInspectionScore]: ${error}`);
+        res.status(500).json({ error: '[getInspectionScore]: Query error' });
+    }
+
 }
 
 /***
@@ -197,47 +224,25 @@ const getCrimeNearRes = async function (req, res) {
 
 /***
  * Route: GET /getDangerScore
- * Get danger score around a given restaurant within '0.5 km'.
+ * Get danger score around a given restaurant within given 'inspection_score_radius' (default to 0.5km).
  * @param {*} req.query.resID
  * 
  */
 const getDangerScore = async function (req, res) {
     const { resID } = req.query;
-    const radius = 0.5;
-    // Haversine公式
-    const haversine = `(6371 * acos(cos(radians(restaurant_latitude))
-                     * cos(radians(crime_latitude))
-                     * cos(radians(crime_longitude) - radians(restaurant_longitude))
-                     + sin(radians(restaurant_latitude))
-                     * sin(radians(crime_latitude))))`;
+    const radius = inspection_score_radius;
 
-    connection.query(`
-        SELECT AVG(cr.danger_score) AS average_danger_score
-        FROM crime c
-        JOIN restaurant r ON r.restaurant_id = ?
-        JOIN crime_rank cr ON c.crime_type = cr.crime_type
-                         AND c.if_arrest = cr.if_arrest
-                         AND c.location_description = cr.location_description
-        WHERE ${haversine} < ?
-    `, [resID, radius], (err, results) => {
-        if (err) {
-            console.error(err);
-            res.status(500).json({ error: '[getDangerScore]: Query error' });
-            return;
-        }
+    try {
+        const avgDangerScore = await calculateDangerScore(resID, radius);
+        res.json({
+            restaurant_id: resID,
+            dangerScore: avgDangerScore
+        });
+    } catch (error) {
+        console.error(`[getDangerScore]: ${error}`);
+        res.status(500).json({ error: '[getDangerScore]: Query error' });
+    }
 
-        if (results.length > 0 && results[0].average_danger_score !== null) {
-            res.json({
-                restaurant_id: resID,
-                dangerScore: results[0].average_danger_score
-            });
-        } else {
-            res.json({
-                restaurant_id: resID,
-                dangerScore: 0 //no crime record founded, danger score set to zero.
-            });
-        }
-    });
 }
 
 /***
@@ -333,6 +338,90 @@ const getNearbyRestaurant = async function (req, res) {
     }
 }
 
+/***
+ * Route: GET /getCrimeByID
+ * @param {*} req.query.crimeID
+ */
+const getCrimeByID = async function (req, res) {
+    const { crimeID } = req.query;
+    connection.query(`SELECT * FROM crime c WHERE c.crime_id = ?`, [crimeID], (err, data) => {
+        if (err) {
+            res.status(500).json({ error: '[getCrimeByID]: Query error' });
+            return;
+        }
+
+        if (data.length > 0) {
+            res.json(data);
+        } else {
+            res.status(404).json({ error: 'No inspection data.' });
+        }
+    })
+}
+
+/**
+ * Route: GET /getRestaurantOverallScore
+ * Calculates and returns an overall score for a restaurant.
+ * @param {*} req.query.resID
+ */
+const getRestaurantOverallScore = async function (req, res) {
+    const { resID } = req.query;
+
+    try {
+        const inspectionScore = await calculateInspectionScore(resID);
+        const dangerScore = await calculateDangerScore(resID, inspection_score_radius);
+
+        // Calculate overall score using an example weighted formula:
+        const overallScore = (inspectionScore * 0.5) + (dangerScore * 0.5); 
+
+        res.json({
+            restaurant_id: resID,
+            overallScore: overallScore,
+            inspectionScore: inspectionScore,
+            dangerScore: dangerScore
+        });
+    } catch (error) {
+        console.error(`[getRestaurantOverallScore]: ${error}`);
+        res.status(500).json({ error: 'Failed to calculate overall score' });
+    }
+}
+
+/**
+ * Route: GET /getCrimeRankByID
+ * Retrieves the rank details for a specific crime.
+ * @param {*} req.query.crimeID
+ */
+const getCrimeRankByID = async function (req, res) {
+    const { crimeID } = req.query;
+
+    try {
+        const query = `
+            SELECT cr.*
+            FROM crime_rank cr
+            JOIN crime c ON cr.location_description = c.location_description
+                         AND cr.if_arrest = c.if_arrest
+                         AND cr.crime_type = c.crime_type
+            WHERE c.crime_id = ?
+        `;
+        connection.query(query, [crimeID], (err, results) => {
+            if (err) {
+                console.error(`[getCrimeRankByID]: Query error: ${err}`);
+                res.status(500).json({ error: 'Database query error' });
+                return;
+            }
+
+            if (results.length > 0) {
+                res.json(results[0]);
+            } else {
+                res.status(404).json({ error: 'Crime rank not found for the specified crime ID' });
+            }
+        });
+    } catch (error) {
+        console.error(`[getCrimeRankByID]: ${error}`);
+        res.status(500).json({ error: 'Server error' });
+    }
+}
+
+
 module.exports = {
     searchRestaurant,
     getRestaurantInfo,
@@ -341,6 +430,9 @@ module.exports = {
     getDangerScore,
     getRestaurantInspection,
     getNearbyRestaurant,
+    getCrimeByID,
+    getRestaurantOverallScore,
+    getCrimeRankByID,
 }
 
 
@@ -556,4 +648,139 @@ module.exports = {
  *         description: Reference restaurant not found.
  *       500:
  *         description: Internal server error.
+ */
+
+/**
+ * @swagger
+ * /getCrimeByID:
+ *   get:
+ *     summary: Retrieves crime information by crime ID
+ *     description: Fetches the details of a crime from the database using a specific crime ID. Returns crime details if found, or an error message if no data is found or if a query error occurs.
+ *     parameters:
+ *       - in: query
+ *         name: crimeID
+ *         required: true
+ *         description: Unique identifier of the crime.
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: A crime record found and returned successfully.
+ *       404:
+ *         description: No crime data found for the given ID.
+ *       500:
+ *         description: Internal server error due to a query failure.
+ */
+
+/**
+ * @swagger
+ * /getRestaurantOverallScore:
+ *   get:
+ *     summary: Calculates and returns an overall score for a restaurant.
+ *     description: This endpoint calculates the overall score for a specified restaurant based on its inspection scores and danger scores from nearby crime data. The scores are weighted equally and combined to provide a single overall score.
+ *     parameters:
+ *       - in: query
+ *         name: resID
+ *         required: true
+ *         description: Unique identifier of the restaurant for which to calculate the overall score.
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully calculated and returned the overall score for the restaurant.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 restaurant_id:
+ *                   type: string
+ *                   description: The unique identifier of the restaurant.
+ *                 overallScore:
+ *                   type: number
+ *                   description: The calculated overall score of the restaurant.
+ *                   example: 13.09145
+ *                 inspectionScore:
+ *                   type: number
+ *                   description: The calculated overall score of the restaurant.
+ *                   example: 8.5
+ *                 dangerScore:
+ *                   type: number
+ *                   description: The calculated overall score of the restaurant.
+ *                   example: 17.6829
+ *       404:
+ *         description: No data found for the given restaurant ID.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Restaurant not found"
+ *       500:
+ *         description: Server error or failed to calculate the score due to an internal error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Failed to calculate overall score"
+ */
+
+/**
+ * @swagger
+ * /getCrimeRankByID:
+ *   get:
+ *     summary: Retrieve crime rank details by crime ID
+ *     description: Fetches the ranking details of a specific crime record by using its unique crime ID.
+ *     parameters:
+ *       - in: query
+ *         name: crimeID
+ *         required: true
+ *         description: The unique identifier of the crime to retrieve the ranking details for.
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved the crime rank details.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 location_description:
+ *                   type: string
+ *                   description: Description of the location where the crime occurred.
+ *                 if_arrest:
+ *                   type: boolean
+ *                   description: Indicates if an arrest was made.
+ *                 crime_type:
+ *                   type: string
+ *                   description: The type of crime.
+ *                 danger_score:
+ *                   type: integer
+ *                   description: The score indicating the danger level of the crime.
+ *       404:
+ *         description: No crime rank found for the provided ID.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: 'Crime rank not found for the specified crime ID'
+ *       500:
+ *         description: Server error or database query error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: 'Database query error'
  */
