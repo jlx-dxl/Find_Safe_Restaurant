@@ -1,19 +1,61 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
-import { Container, Box, Paper, Typography, Button, Menu, MenuItem, Divider, List, ListItem, Card, CardContent, Pagination } from '@mui/material';
+import { Container, Box, Paper, Typography, Button, Menu, MenuItem, Divider, List, ListItem, Card, CardContent} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import { Bar } from 'react-chartjs-2';
 
 export default function SecurityReportPage() {
   const { restaurant_id } = useParams();
   const theme = useTheme();
   const [restaurantInfo, setRestaurantInfo] = useState({ name: 'Loading...', address: 'Loading...', securityScore: 'Pending' });
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [selectedDistance, setSelectedDistance] = useState('');
+  const [anchorEl, setAnchorEl] = useState({});
+  const [selectedDistance, setSelectedDistance] = useState('0.1 km');
   const [selectedType, setSelectedType] = useState('');
   const [dangerScore, setDangerScore] = useState(null);
   const [crimeDetails, setCrimeDetails] = useState([]);
   const [loadingCrimeDetails, setLoadingCrimeDetails] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [selectedYear, setSelectedYear] = useState('2016'); // Default to 2016
+  const [totalCrimes, setTotalCrimes] = useState(0);
+  const [isTypeAnalysisOpen, setIsTypeAnalysisOpen] = useState(false);
 
+  const [barPlotData, setBarPlotData] = useState({
+    labels: [],
+    datasets: [{
+      label: 'Number of Crimes',
+      data: [],
+      backgroundColor: 'rgba(54, 162, 235, 0.2)',
+      borderColor: 'rgba(54, 162, 235, 1)',
+      borderWidth: 1,
+    }]
+  });
+  const handleOpenTypeAnalysis = () => {
+    setIsTypeAnalysisOpen(true);
+  };
+  const handleCloseTypeAnalysis = () => {
+    setIsTypeAnalysisOpen(false);
+  };
+
+  const processCrimeDataForBarPlot = (crimeData, selectedYear) => {
+    const crimeCounts = crimeTypes.reduce((acc, type) => {
+      acc[type] = crimeData.filter(crime => crime.crime_type === type && crime.crime_date.startsWith(selectedYear)).length;
+      return acc;
+    }, {});
+  
+    setBarPlotData({
+      labels: Object.keys(crimeCounts),
+      datasets: [{
+        label: 'Number of Crimes',
+        data: Object.values(crimeCounts),
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1,
+      }]
+    });
+  };
+  
   const crimeTypes = [
     'Murder', 'Homicide', 'Robbery', 'Assault', 'Narcotics', 'Prostitution',
     'Battery', 'Theft', 'Burglary', 'Motor vehicle theft', 'Arson',
@@ -21,88 +63,91 @@ export default function SecurityReportPage() {
   ];
 
   const handleClick = (event, menuType) => {
-    setAnchorEl({ ...anchorEl, [menuType]: event.currentTarget });
+    setAnchorEl(prevState => ({ ...anchorEl, [menuType]: event.currentTarget }));
   };
 
   const handleClose = (menuType) => {
-    setAnchorEl({ ...anchorEl, [menuType]: null });
+    setAnchorEl(prevState => ({ ...anchorEl, [menuType]: null }));
   };
 
   const handleDistanceSelect = (distance) => {
     setSelectedDistance(distance);
     handleClose('distance');
-    fetchCrimeDetails(distance, selectedType);
+    fetchAllData(distance, selectedType); // Changed from fetchCrimeDetails to fetchAllData
   };
 
   const handleTypeSelect = (type) => {
     setSelectedType(type);
     handleClose('type');
-    fetchCrimeDetails(selectedDistance, type);
+    fetchAllData(selectedDistance, type); // Changed from fetchCrimeDetails to fetchAllData
   };
 
-  const fetchCrimeDetails = (distance, type) => {
-    setLoadingCrimeDetails(true);
-    const distanceInMeters = { '0.1 km': 100, '0.5 km': 500, '1 km': 1000, '5 km': 5000 }[distance] || 1000; // Default to 1 km if none selected
-    let url = `/getCrimeNearRes?resID=${restaurant_id}&distance=${distanceInMeters}`;
+  const handleYearSelect = (year) => {
+    setSelectedYear(year);
+    handleClose('year');
+    fetchAllData(selectedDistance, selectedType, year); // Now includes year in the fetch
+  };
+
+  const fetchAllData = async (distance, type, year) => {
+    console.log('Fetching data with filters:', { distance, type, year });
+    setLoading(true);
+    const distanceInMeters = { '0.1 km': 100, '0.5 km': 500, '1 km': 1000, '5 km': 5000 }[distance];
+
+    let crimeUrl = `/getCrimeNearRes?resID=${restaurant_id}&distance=${distanceInMeters}`;
     if (type) {
-      url += `&crimeType=${type}`;
+      crimeUrl += `&crimeType=${type}`;
     }
-    fetch(url)
-      .then(response => response.json())
-      .then(data => {
-        setCrimeDetails(data.slice(0, 10).map(detail => ({
-          ...detail,
-          crime_date: new Date(detail.crime_date).toLocaleDateString(),
-          crime_type: detail.crime_type.charAt(0).toUpperCase() + detail.crime_type.slice(1).toLowerCase(),
-          crime_description: detail.crime_description.charAt(0).toUpperCase() + detail.crime_description.slice(1).toLowerCase(),
-        })));
-        setLoadingCrimeDetails(false);
-      })
-      .catch(error => {
-        console.error('Failed to fetch crime details:', error);
-        setLoadingCrimeDetails(false);
+    if (year) {
+      crimeUrl += `&crimeYear=${year}`;
+    }
+
+    try {
+      const [infoResponse, scoreResponse, crimeResponse] = await Promise.all([
+        fetch(`/getRestaurantInfo?resID=${restaurant_id}`),
+        fetch(`/getDangerScore?resID=${restaurant_id}`),
+        fetch(crimeUrl)
+      ]);
+
+      const [infoData, scoreData, crimeData] = await Promise.all([
+        infoResponse.json(),
+        scoreResponse.json(),
+        crimeResponse.json()
+      ]);
+
+      setRestaurantInfo({
+        name: infoData.restaurant_name,
+        address: infoData.restaurant_address,
+        securityScore: infoData.securityScore || 'Pending'
       });
+
+      setDangerScore(scoreData.dangerScore);
+
+      setCrimeDetails(crimeData.slice(0, 10).map(detail => ({
+        ...detail,
+        crime_date: new Date(detail.crime_date).toLocaleDateString(),
+        crime_type: detail.crime_type.charAt(0).toUpperCase() + detail.crime_type.slice(1).toLowerCase(),
+        crime_description: detail.crime_description.charAt(0).toUpperCase() + detail.crime_description.slice(1).toLowerCase(),
+      })));
+
+      setTotalCrimes(crimeData.length);
+      processCrimeDataForBarPlot(crimeData, year);
+      console.log('Total crimes set to:', crimeData.length);
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const fetchRestaurantInfo = () => {
-    fetch(`/getRestaurantInfo?resID=${restaurant_id}`)
-      .then(response => response.json())
-      .then(data => {
-        setRestaurantInfo({
-          name: data.restaurant_name,
-          address: data.restaurant_address,
-          securityScore: 'Loading...' // Placeholder until the score is fetched
-        });
-        // Fetch inspection score after fetching restaurant info
-        fetchDangerScore();
-      })
-      .catch(error => console.error('Failed to fetch restaurant info:', error));
-  };
-  const fetchDangerScore = () => {
-    fetch(`/getDangerScore?resID=${restaurant_id}`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
-      .then(data => {
-        setDangerScore(data.dangerScore); // Update state with fetched danger score
-      })
-      .catch(error => {
-        console.error('Failed to fetch danger score:', error);
-        setDangerScore('Error fetching score'); // Handle error state appropriately
-      });
-  };
-  // Fetch Restaurant Information on component mount
   useEffect(() => {
-    fetchRestaurantInfo();
-    fetchDangerScore();
-    if (selectedDistance && selectedType) {
-      fetchCrimeDetails(selectedDistance, selectedType);
-    }
-    // You can add more functions to be called here if needed
-  }, []);
+    // Fetch all initial data on component mount with the default or previously selected values
+    fetchAllData(selectedDistance, selectedType, selectedYear);
+  }, [selectedDistance, selectedType, selectedYear]); // Include selectedYear in the dependency array
+
+  if (loading) {
+    return <div>Loading...</div>; // Display loading indicator while data is fetching
+  }
+
 
   return (
     <Container sx={{ display: 'flex', flexDirection: 'row', pt: 4, bgcolor: theme.palette.background.default }}>
@@ -132,7 +177,7 @@ export default function SecurityReportPage() {
           aria-controls="type-menu"
           aria-haspopup="true"
           onClick={(e) => handleClick(e, 'type')}
-          sx={{ mt: 2, width: '100%', bgcolor: theme.palette.background.paper, '&:hover': { bgcolor: theme.palette.action.hover } }}
+          sx={{ mt: 0.5, width: '100%', bgcolor: theme.palette.background.paper, '&:hover': { bgcolor: theme.palette.action.hover } }}
         >
           Select Crime Type
         </Button>
@@ -149,9 +194,92 @@ export default function SecurityReportPage() {
             </MenuItem>
           ))}
         </Menu>
-        <Typography variant="body1" sx={{ mt: 2, mb: 2, color: theme.palette.text.secondary }}>
-          {selectedDistance ? `Distance: ${selectedDistance}` : 'No distance selected'}{selectedType ? `, Type: ${selectedType}` : ''}
-        </Typography>
+        <Button
+          aria-controls="year-menu"
+          aria-haspopup="true"
+          onClick={(e) => handleClick(e, 'year')}
+          sx={{ mt: 2, width: '100%', bgcolor: theme.palette.background.paper, '&:hover': { bgcolor: theme.palette.action.hover } }}
+        >
+          Select Year
+        </Button>
+        <Menu
+          id="year-menu"
+          anchorEl={anchorEl['year']}
+          keepMounted
+          open={Boolean(anchorEl['year'])}
+          onClose={() => handleClose('year')}
+        >
+          {['2012', '2013', '2014', '2015', '2016'].map((year, index) => (
+            <MenuItem key={index} onClick={() => handleYearSelect(year)}>
+              {year}
+            </MenuItem>
+          ))}
+        </Menu>
+        {/* This Typography below will now be the only one that displays the selected filters */}
+        <Box sx={{ mt: 2 }}>
+          {selectedDistance && (
+            <Typography variant="body1" sx={{ color: theme.palette.text.secondary }}>
+              Distance: {selectedDistance}
+            </Typography>
+          )}
+          {selectedType && (
+            <Typography variant="body1" sx={{ color: theme.palette.text.secondary }}>
+              Type: {selectedType}
+            </Typography>
+          )}
+          {selectedYear && (
+            <Typography variant="body1" sx={{ color: theme.palette.text.secondary }}>
+              Year: {selectedYear}
+            </Typography>
+
+          )}
+          <Typography variant="body2" sx={{ mt: 2, color: theme.palette.text.secondary }}>
+            Total Crimes: {totalCrimes}
+          </Typography>
+        </Box>
+        <Button
+          variant="outlined"
+          sx={{ mt: 2 }}
+          onClick={handleOpenTypeAnalysis}
+        >
+          Type Analysis
+        </Button>
+        <Dialog open={isTypeAnalysisOpen} onClose={handleCloseTypeAnalysis} fullWidth={true} maxWidth="md">
+      <DialogTitle>
+        Type Analysis
+        <IconButton
+          aria-label="close"
+          onClick={handleCloseTypeAnalysis}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent>
+        {/* Render the bar chart here */}
+        <Bar
+          key={selectedYear}
+          data={barPlotData}
+          options={{
+            scales: {
+              y: {
+                beginAtZero: true
+              }
+            },
+            plugins: {
+              legend: {
+                position: 'top',
+              }
+            }
+          }}
+        />
+      </DialogContent>
+    </Dialog>
       </Box>
 
       <Box width="80%" sx={{ ml: 2 }}>
@@ -168,7 +296,7 @@ export default function SecurityReportPage() {
           <Divider sx={{ my: 2 }} />
           {selectedDistance && (
             <Box sx={{ mt: 4 }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>Security Details:</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>10 Security Details:</Typography>
               {loadingCrimeDetails ? (
                 <Typography>Loading crime details...</Typography>
               ) : (
@@ -196,6 +324,6 @@ export default function SecurityReportPage() {
           )}
         </Paper>
       </Box>
-    </Container>
+    </Container >
   );
-}  
+}
