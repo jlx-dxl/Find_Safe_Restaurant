@@ -39,13 +39,23 @@ export default function SecurityReportPage() {
   };
 
   const processCrimeDataForBarPlot = (crimeData, selectedYear) => {
-    const crimeCounts = crimeTypes.reduce((acc, type) => {
-      acc[type] = crimeData.filter(crime => crime.crime_type === type && crime.crime_date.startsWith(selectedYear)).length;
+    const initialCrimeCounts = crimeTypes.reduce((acc, type) => {
+      acc[type] = 0;
       return acc;
     }, {});
+
+    const crimeCounts = crimeData.reduce((acc, crime) => {
+      if (crime.crime_type && crime.crime_date.startsWith(selectedYear)) {
+        const type = crime.crime_type.charAt(0).toUpperCase() + crime.crime_type.slice(1).toLowerCase();
+        if (acc[type] !== undefined) {
+          acc[type] += 1; 
+        }
+      }
+      return acc;
+    }, initialCrimeCounts);
   
     setBarPlotData({
-      labels: Object.keys(crimeCounts),
+      labels: crimeTypes, 
       datasets: [{
         label: 'Number of Crimes',
         data: Object.values(crimeCounts),
@@ -54,7 +64,7 @@ export default function SecurityReportPage() {
         borderWidth: 1,
       }]
     });
-  };
+};
   
   const crimeTypes = [
     'Murder', 'Homicide', 'Robbery', 'Assault', 'Narcotics', 'Prostitution',
@@ -245,41 +255,41 @@ export default function SecurityReportPage() {
           Type Analysis
         </Button>
         <Dialog open={isTypeAnalysisOpen} onClose={handleCloseTypeAnalysis} fullWidth={true} maxWidth="md">
-      <DialogTitle>
-        Type Analysis
-        <IconButton
-          aria-label="close"
-          onClick={handleCloseTypeAnalysis}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent>
-        {/* Render the bar chart here */}
-        <Bar
-          key={selectedYear}
-          data={barPlotData}
-          options={{
-            scales: {
-              y: {
-                beginAtZero: true
-              }
-            },
-            plugins: {
-              legend: {
-                position: 'top',
-              }
-            }
-          }}
-        />
-      </DialogContent>
-    </Dialog>
+          <DialogTitle>
+            Type Analysis - {selectedYear}  {/* Here is the change */}
+            <IconButton
+              aria-label="close"
+              onClick={handleCloseTypeAnalysis}
+              sx={{
+                position: 'absolute',
+                right: 8,
+                top: 8,
+                color: (theme) => theme.palette.grey[500],
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            {/* Render the bar chart here */}
+            <Bar
+              key={selectedYear}
+              data={barPlotData}
+              options={{
+                scales: {
+                  y: {
+                    beginAtZero: true
+                  }
+                },
+                plugins: {
+                  legend: {
+                    position: 'top',
+                  }
+                }
+              }}
+            />
+          </DialogContent>
+        </Dialog>
       </Box>
 
       <Box width="80%" sx={{ ml: 2 }}>
