@@ -1,44 +1,168 @@
-import { useEffect, useState } from 'react';
-import { Box, Container, Button} from '@mui/material';
-import { NavLink } from 'react-router-dom';
-import { useParams } from 'react-router-dom';
+import React, {useState, useEffect} from 'react';
+import {useParams, useNavigate, Link} from 'react-router-dom';
+import {Container, Box, Typography, Button, Grid, Card, CardContent, CardActions} from '@mui/material';
 
-const config = require('../config.json');
 export default function RestaurantInfoPage() {
-  let { restaurantId } = useParams();
-  const [restaurantInfo, setRestaurantInfo] = useState({
-    name: 'Restaurant Name', // Placeholder name
-    address: 'Address', // Placeholder address
-    overallScore: 'TODO: define overall score', // Placeholder overall score
-    inspectionScore: 'X?', // Placeholder inspection score
-    securityScore: 'X?', // Placeholder security score
-  });
+    const {restaurant_id} = useParams();
+    const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(true); // Initially set the loading state to true
+    const [restaurantInfo, setRestaurantInfo] = useState({
+        name: '',
+        address: '',
+        overallScore: '',
+        inspectionScore: '',
+        securityScore: '',
+    });
 
-  // Placeholder effect for fetching restaurant info
-  // useEffect(() => {
-  //   fetch(/* API endpoint */)
-  //     .then(res => res.json())
-  //     .then(resJson => setRestaurantInfo(resJson));
-  // }, []);
+    useEffect(() => {
+        let isInspectionScoreReceived = false;
+        let isDangerScoreReceived = false;
+        let tempInspectionScore = 0;
+        let tempDangerScore = 0;
 
-  return (
-    <Container>
-      <Box sx={{ my: 4, p: 2, border: '1px solid #ccc', borderRadius: '8px' }}>
-        <h1>{restaurantInfo.name}</h1>
-        <p>{restaurantInfo.address}</p>
-        <p>Overall Restaurant Score: {restaurantInfo.overallScore}</p>
-        <p>Inspection Score: {restaurantInfo.inspectionScore}</p>
-        <p>Security Score: {restaurantInfo.securityScore}</p>
-        <Button variant="contained" color="primary" sx={{ my: 1 }}>
-          Check Security Report
-        </Button>
-        <Button variant="contained" color="primary" sx={{ my: 1 }}>
-          Check Inspection Report
-        </Button>
-        <Button variant="contained" color="secondary" sx={{ my: 1 }}>
-          Check Nearby Better Restaurant
-        </Button>
-      </Box>
-    </Container>
-  );
+        // Fetch basic restaurant information
+        fetch(`/getRestaurantInfo?resID=${restaurant_id}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                setRestaurantInfo(prev => ({
+                    ...prev,
+                    name: data.restaurant_name,
+                    address: data.restaurant_address,
+                }));
+            })
+            .catch(error => {
+                console.error(error);
+                navigate('/error'); // Redirect on error
+            });
+
+        // Fetch the inspection score
+        fetch(`/getInspectionScore?resID=${restaurant_id}`)
+            .then(response => response.ok ? response.json() : Promise.reject('Failed to load inspection score'))
+            .then(data => {
+                tempInspectionScore = data.inspectionScore;
+                isInspectionScoreReceived = true;
+                tryUpdateOverallScore();
+            })
+            .catch(error => console.error(error));
+
+        // Fetch the danger score and update securityScore
+        fetch(`/getDangerScore?resID=${restaurant_id}`)
+            .then(response => response.ok ? response.json() : Promise.reject('Failed to load danger score'))
+            .then(data => {
+                tempDangerScore = data.dangerScore;
+                isDangerScoreReceived = true;
+                setRestaurantInfo(prev => ({
+                    ...prev,
+                    securityScore: tempDangerScore, // Update securityScore with the fetched dangerScore
+                }));
+                tryUpdateOverallScore();
+            })
+            .catch(error => console.error(error));
+
+        function tryUpdateOverallScore() {
+            if (isInspectionScoreReceived && isDangerScoreReceived) {
+                setIsLoading(false); // Set loading to false when all data is received
+                const overallScore = tempInspectionScore + tempDangerScore;
+                setRestaurantInfo(prev => ({
+                    ...prev,
+                    overallScore: overallScore.toFixed(2),
+                    inspectionScore: tempInspectionScore.toFixed(2),
+                    securityScore: tempDangerScore.toFixed(2),
+                }));
+            }
+        }
+    }, [restaurant_id, navigate]);
+
+
+    return (
+        <Box sx={{
+            ...({
+                backgroundImage: 'url("/restaurant-info-bg.jpg")',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+            } ),
+            height: '100vh', // Adjust the height of the image as needed
+            display: 'flex',
+        }}>
+            <Container maxWidth="md" sx={{mt: 4}}>
+                {isLoading ? (
+                    <Typography variant="h4" sx={{textAlign: 'center'}}>Loading...</Typography>
+                ) : (
+                    <>
+                        <Card raised sx={{mb: 4}}>
+                            <CardContent>
+                                <Typography variant="h4" gutterBottom>
+                                    {restaurantInfo.name}
+                                </Typography>
+                                <Typography variant="subtitle1" gutterBottom>
+                                    {restaurantInfo.address}
+                                </Typography>
+                                <Typography variant="h6" color="primary" gutterBottom>
+                                    Overall Restaurant Score: {restaurantInfo.overallScore}
+                                </Typography>
+                            </CardContent>
+                        </Card>
+
+                        <Grid container spacing={3}>
+                            <Grid item xs={12} md={6}>
+                                <ScoreCard
+                                    title="Inspection Score"
+                                    score={restaurantInfo.inspectionScore}
+                                    link={`/inspectionreport/${restaurant_id}`}
+                                    buttonText="Check Inspection Report"
+                                    color="warning"
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <ScoreCard
+                                    title="Security Score"
+                                    score={restaurantInfo.securityScore}
+                                    link={`/securityreport/${restaurant_id}`}
+                                    buttonText="Check Security Report"
+                                    color="info"
+                                />
+                            </Grid>
+                        </Grid>
+
+                        <Box sx={{textAlign: 'center', mt: 4}}>
+                            <Link to={`/nearbyrestaurant/${restaurant_id}`} style={{textDecoration: 'none'}}>
+                                <Button variant="contained" color="success" size="large">
+                                    Check Nearby Better Restaurant
+                                </Button>
+                            </Link>
+                        </Box>
+                    </>
+                )}
+            </Container>
+        </Box>
+    );
+}
+
+function ScoreCard({title, score, link, buttonText, color}) {
+    return (
+        <Card raised>
+            <CardContent sx={{bgcolor: color + ".light", p: 3}}>
+                <Typography variant="h5" component="div">
+                    {title}
+                </Typography>
+                <Typography variant="h6">
+                    {score}
+                </Typography>
+            </CardContent>
+            <CardActions sx={{justifyContent: 'center', pb: 2}}>
+                <Link to={link} style={{textDecoration: 'none'}}>
+                    <Button size="small" variant="contained" color={color}>
+                        {buttonText}
+                    </Button>
+                </Link>
+            </CardActions>
+        </Card>
+    );
+
 }
