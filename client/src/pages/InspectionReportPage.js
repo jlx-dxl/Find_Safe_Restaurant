@@ -17,6 +17,7 @@ export default function InspectionReportPage() {
   const [chartData, setChartData] = useState({});
   const [anchorEl, setAnchorEl] = useState(null);
   const [selectedYear, setSelectedYear] = useState('');
+  const [loading, setLoading] = useState(true); 
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -25,83 +26,43 @@ export default function InspectionReportPage() {
   const handleYearSelect = (year) => {
     setSelectedYear(year);
     setAnchorEl(null);
-    fetchInspectionDetails(year);
+  };
+  
+
+  const fetchAllData = async () => {
+    try {
+      const infoResponse = await fetch(`/getRestaurantInfo?resID=${restaurant_id}`);
+      const scoreResponse = await fetch(`/getInspectionScore?resID=${restaurant_id}`);
+      const detailsResponse = await fetch(`/getRestaurantInspection?resID=${restaurant_id}&year=${selectedYear}`);
+
+      // Once all promises are resolved, convert to JSON
+      const infoData = await infoResponse.json();
+      const scoreData = await scoreResponse.json();
+      const detailsData = await detailsResponse.json();
+
+      // Update state with the fetched data
+      setRestaurantInfo({
+        name: infoData.restaurant_name,
+        address: infoData.restaurant_address,
+        inspectionScore: infoData.inspectionScore
+      });
+
+      setInspections(detailsData);
+      updateChartData(detailsData);
+
+      // Stop loading once data is set
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      // Stop loading even if there is an error
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    fetchRestaurantInfo();
-    fetchInspectionScore();
-    fetchInspectionDetails(2022); // For debugging purposes, remove or replace with dynamic year later
-  }, []);
-  
+    fetchAllData(selectedYear);
+  }, [selectedYear]);
 
-  const fetchInspectionScore = () => {
-    fetch(`/getInspectionScore?resID=${restaurant_id}`)
-      .then(response => {
-        if (!response.ok) {
-            throw new Error('Failed to fetch inspection score');
-        }
-        return response.json();
-      })
-      .then(data => {
-        // Check if data contains the inspectionScore and is not null
-        if (data && data.inspectionScore !== undefined && data.inspectionScore !== null) {
-          const roundedScore = parseFloat(data.inspectionScore).toFixed(2); // Round to two decimal places
-          setRestaurantInfo(prevState => ({
-            ...prevState,
-            inspectionScore: roundedScore
-          }));
-        } else {
-          setRestaurantInfo(prevState => ({
-            ...prevState,
-            inspectionScore: 'No score available'
-          }));
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching inspection score:', error);
-        setRestaurantInfo(prevState => ({
-          ...prevState,
-          inspectionScore: 'Failed to load score'
-        }));
-      });
-};
-
-
-const fetchRestaurantInfo = () => {
-    fetch(`/getRestaurantInfo?resID=${restaurant_id}`)
-      .then(response => response.json())
-      .then(data => {
-        setRestaurantInfo({
-          name: data.restaurant_name,
-          address: data.restaurant_address,
-          inspectionScore: 'Loading...' // Placeholder until the score is fetched
-        });
-        // Fetch inspection score after fetching restaurant info
-        fetchInspectionScore();
-      })
-      .catch(error => console.error('Failed to fetch restaurant info:', error));
-};
-
-useEffect(() => {
-  fetchRestaurantInfo();
-  fetchInspectionScore();
-  fetchInspectionDetails(2022); // For debugging purposes, remove or replace with dynamic year later
-}, []);
-
-
-  const fetchInspectionDetails = (year) => {
-    fetch(`/getRestaurantInspection?resID=${restaurant_id}&year=${year}`)
-      .then(response => response.json())
-      .then(data => {
-        setInspections(data);
-        updateChartData(data);
-      })
-      .catch(error => {
-        console.error('Error fetching inspection details:', error);
-        setInspections([]);
-      });
-  };
 
   const updateChartData = (data) => {
     const counts = data.reduce((acc, curr) => {
@@ -117,7 +78,9 @@ useEffect(() => {
       }]
     });
   };
-
+  if (loading) {
+    return <div>Loading...</div>;
+  }
   return (
     <Container sx={{ display: 'flex', flexDirection: 'row', pt: 4 }}>
     <Box width="20%" minWidth="150px">
