@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Pagination from '@mui/material/Pagination';
 import {
-    Container, Grid, Typography, Box, Select, MenuItem, FormControl, InputLabel, List, ListItem, ListItemText, Card, CardActionArea
+    Container, Grid, Typography, Box, Select, MenuItem, FormControl, InputLabel, Card, CardActionArea
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 
@@ -22,9 +22,9 @@ export default function NearByRestaurantPage() {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
-                const data = await response.json();
-                setRestaurants(data);
-                setTotalPages(Math.ceil(data.totalCount / pageSize));  // Assumes totalCount is provided by API
+                const { restaurants, totalPages } = await response.json(); // Assuming the response structure includes `restaurants` and `total`
+                setRestaurants(restaurants);
+                setTotalPages(Math.ceil(totalPages / pageSize));  // Now directly using total pages
             } catch (error) {
                 console.error('Failed to fetch data:', error);
             }
@@ -44,7 +44,6 @@ export default function NearByRestaurantPage() {
     const handlePageChange = (event, value) => {
         setPage(value);
     };
-
 
     return (
         <Container>
@@ -72,14 +71,14 @@ export default function NearByRestaurantPage() {
                     <Box mb={2}>
                         <FormControl fullWidth>
                             <InputLabel>Sort by</InputLabel>
-                            <Select
-                                value={sortType}
-                                label="Sort by"
-                                onChange={handleSortChange}
-                            >
-                                <MenuItem value="distance">Distance</MenuItem>
-                                <MenuItem value="score">Score</MenuItem>
-                            </Select>
+                    <Select
+                        value={sortType}
+                        label="Sort by"
+                        onChange={handleSortChange}
+                    >
+                        <MenuItem value="distance">Distance</MenuItem>
+                        <MenuItem value="overallScore">Score</MenuItem>
+                    </Select>
                         </FormControl>
                     </Box>
                 </Grid>
@@ -100,11 +99,17 @@ export default function NearByRestaurantPage() {
                                         <Typography variant="body2" color="text.secondary">
                                             Distance: {restaurant.distance.toFixed(2)} km
                                         </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            Score: {restaurant.overallScore} {/* Added overall score display */}
+                                        </Typography>
                                     </Box>
                                 </Link>
                             </CardActionArea>
                         </Card>
                     ))}
+                    <Typography sx={{ mt: 3, mb: 2 }} align="center">
+                        Page {page} of {totalPages}
+                    </Typography>
                     <Pagination
                         count={totalPages}
                         page={page}
