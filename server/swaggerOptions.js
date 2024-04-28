@@ -3,7 +3,7 @@ const swaggerDefinition = {
     openapi: '3.0.0',
     info: {
       title: 'FOOD_CRIME_CHICAGO  API Documentation',
-      version: '1.0.0',
+      version: '1.0.2',
       description: 'This is the swagger doc for the CIS5500 Final Proj',
       license: {
         name: 'Licensed Under MIT',
