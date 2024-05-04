@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Container, Grid, Typography, Box, Select, MenuItem, FormControl, InputLabel, Card, CardActionArea, Link } from '@mui/material';
+import { useParams, Link } from 'react-router-dom';
+import { Container, Grid, Typography, Box, Select, MenuItem, FormControl, InputLabel, Card, CardActionArea } from '@mui/material';
 import Pagination from '@mui/material/Pagination';
 
 export default function NearByRestaurantPage() {
@@ -8,8 +8,8 @@ export default function NearByRestaurantPage() {
     const [restaurants, setRestaurants] = useState([]);
     const [totalPages, setTotalPages] = useState(0);
     const [sortType, setSortType] = useState('distance');
-    const [sortOrder, setSortOrder] = useState('asc'); // Default sort order
-    const [distanceFilter, setDistanceFilter] = useState(1); // Default set to 1 km
+    const [sortOrder, setSortOrder] = useState('asc');
+    const [distanceFilter, setDistanceFilter] = useState(1);
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
 
@@ -57,11 +57,7 @@ export default function NearByRestaurantPage() {
                     <Box mb={2}>
                         <FormControl fullWidth>
                             <InputLabel>Distance</InputLabel>
-                            <Select
-                                value={distanceFilter}
-                                label="Distance"
-                                onChange={handleDistanceChange}
-                            >
+                            <Select value={distanceFilter} label="Distance" onChange={handleDistanceChange}>
                                 <MenuItem value={1}>{"< 1 km"}</MenuItem>
                                 <MenuItem value={5}>{"< 5 km"}</MenuItem>
                                 <MenuItem value={10}>{"< 10 km"}</MenuItem>
@@ -72,11 +68,7 @@ export default function NearByRestaurantPage() {
                     <Box mb={2}>
                         <FormControl fullWidth>
                             <InputLabel>Sort by</InputLabel>
-                            <Select
-                                value={sortType}
-                                label="Sort by"
-                                onChange={handleSortChange}
-                            >
+                            <Select value={sortType} label="Sort by" onChange={handleSortChange}>
                                 <MenuItem value="distance">Distance</MenuItem>
                                 <MenuItem value="overallScore">Score</MenuItem>
                             </Select>
@@ -85,11 +77,7 @@ export default function NearByRestaurantPage() {
                     <Box mb={2}>
                         <FormControl fullWidth>
                             <InputLabel>Order</InputLabel>
-                            <Select
-                                value={sortOrder}
-                                label="Order"
-                                onChange={handleSortOrderChange}
-                            >
+                            <Select value={sortOrder} label="Order" onChange={handleSortOrderChange}>
                                 <MenuItem value="asc">Ascending</MenuItem>
                                 <MenuItem value="desc">Descending</MenuItem>
                             </Select>
@@ -120,18 +108,7 @@ export default function NearByRestaurantPage() {
                             </CardActionArea>
                         </Card>
                     ))}
-                    <Pagination
-                        count={totalPages}
-                        page={page}
-                        onChange={handlePageChange}
-                        boundaryCount={1}
-                        siblingCount={1}
-                        showFirstButton
-                        showLastButton
-                        variant="outlined"
-                        shape="rounded"
-                        sx={{ mt: 4 }}
-                    />
+                    <Pagination count={totalPages} page={page} onChange={handlePageChange} boundaryCount={1} siblingCount={1} showFirstButton showLastButton variant="outlined" shape="rounded" sx={{ mt: 4 }} />
                 </Grid>
             </Grid>
         </Container>
