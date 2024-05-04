@@ -21,6 +21,12 @@ export default function SecurityReportPage() {
   const [totalCrimes, setTotalCrimes] = useState(0);
   const [isTypeAnalysisOpen, setIsTypeAnalysisOpen] = useState(false);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = crimeDetails.slice(indexOfFirstItem, indexOfLastItem);
+
   const [barPlotData, setBarPlotData] = useState({
     labels: [],
     datasets: [{
@@ -43,6 +49,15 @@ export default function SecurityReportPage() {
       acc[type] = 0;
       return acc;
     }, {});
+    const handleNextPage = () => {
+      setCurrentPage(currentPage + 1);
+    };
+
+    const handlePreviousPage = () => {
+      if (currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+    };
 
     const crimeCounts = crimeData.reduce((acc, crime) => {
       if (crime.crime_type && crime.crime_date.startsWith(selectedYear)) {
@@ -67,9 +82,9 @@ export default function SecurityReportPage() {
   };
 
   const crimeTypes = [
-    'Murder', 'Homicide', 'Robbery', 'Assault', 'Battery', 'Theft', 'Weapons Violation', 
-    'Motor Vehicle Theft', 'Criminal Damage', 'Other Offense', 'Deceptive Practice', 
-    'Criminal Trespass', 'Burglary', 'Stalking', 'Narcotics', 'Crim Sexual Assault', 'Other'    
+    'Murder', 'Homicide', 'Robbery', 'Assault', 'Battery', 'Theft', 'Weapons Violation',
+    'Motor Vehicle Theft', 'Criminal Damage', 'Other Offense', 'Deceptive Practice',
+    'Criminal Trespass', 'Burglary', 'Stalking', 'Narcotics', 'Crim Sexual Assault', 'Other'
   ];
 
   const handleClick = (event, menuType) => {
@@ -132,7 +147,7 @@ export default function SecurityReportPage() {
 
       setDangerScore(scoreData.safetyScore);
 
-      setCrimeDetails(crimeData.slice(0, 10).map(detail => ({
+      setCrimeDetails(crimeData.map(detail => ({
         ...detail,
         crime_date: new Date(detail.crime_date).toLocaleDateString(),
         crime_type: detail.crime_type.charAt(0).toUpperCase() + detail.crime_type.slice(1).toLowerCase(),
@@ -315,7 +330,7 @@ export default function SecurityReportPage() {
                 <Typography>Loading crime details...</Typography>
               ) : (
                 <List>
-                  {crimeDetails.map((detail, index) => (
+                  {currentItems.map((detail, index) => (
                     <ListItem key={index}>
                       <Card sx={{ mb: 2, width: '100%' }}>
                         <CardContent>
@@ -337,6 +352,17 @@ export default function SecurityReportPage() {
                   ))}
                 </List>
               )}
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                <Button onClick={() => setCurrentPage(page => page - 1)} disabled={currentPage === 1}>
+                  Previous
+                </Button>
+                <Typography sx={{ mx: 2 }}>
+                  Page {currentPage} of {Math.ceil(crimeDetails.length / itemsPerPage)}
+                </Typography>
+                <Button onClick={() => setCurrentPage(page => page + 1)} disabled={currentPage === Math.ceil(crimeDetails.length / itemsPerPage)}>
+                  Next
+                </Button>
+              </Box>
             </Box>
           )}
         </Paper>
