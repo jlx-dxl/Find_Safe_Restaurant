@@ -67,9 +67,9 @@ export default function SecurityReportPage() {
   };
 
   const crimeTypes = [
-    'MURDER', 'HOMICIDE', 'ROBBERY', 'ASSAULT', 'BATTERY', 'THEFT', 'WEAPONS VIOLATION', 
-                'MOTOR VEHICLE THEFT', 'CRIMINAL DAMAGE', 'OTHER OFFENSE', 'DECEPTIVE PRACTICE', 
-                'CRIMINAL TRESPASS', 'BURGLARY', 'STALKING', 'NARCOTICS', 'CRIM SEXUAL ASSAULT','OTHER'
+    'Murder', 'Homicide', 'Robbery', 'Assault', 'Battery', 'Theft', 'Weapons Violation', 
+    'Motor Vehicle Theft', 'Criminal Damage', 'Other Offense', 'Deceptive Practice', 
+    'Criminal Trespass', 'Burglary', 'Stalking', 'Narcotics', 'Crim Sexual Assault', 'Other'    
   ];
 
   const handleClick = (event, menuType) => {
@@ -114,7 +114,7 @@ export default function SecurityReportPage() {
     try {
       const [infoResponse, scoreResponse, crimeResponse] = await Promise.all([
         fetch(`/getRestaurantInfo?resID=${restaurant_id}`),
-        fetch(`/getDangerScore?resID=${restaurant_id}`),
+        fetch(`/getSafetyScore?resID=${restaurant_id}`),
         fetch(crimeUrl)
       ]);
 
@@ -130,7 +130,7 @@ export default function SecurityReportPage() {
         securityScore: infoData.securityScore || 'Pending'
       });
 
-      setDangerScore(scoreData.dangerScore);
+      setDangerScore(scoreData.safetyScore);
 
       setCrimeDetails(crimeData.slice(0, 10).map(detail => ({
         ...detail,
@@ -310,7 +310,7 @@ export default function SecurityReportPage() {
           <Divider sx={{ my: 2 }} />
           {selectedDistance && (
             <Box sx={{ mt: 4 }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>10 Security Details:</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>Security Details:</Typography>
               {loadingCrimeDetails ? (
                 <Typography>Loading crime details...</Typography>
               ) : (

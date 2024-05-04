@@ -127,7 +127,7 @@ export default function InspectionReportPage() {
             {restaurantInfo.address}
           </Typography>
           <Typography variant="body1" sx={{ mb: 2 }}>
-            Inspection Score: {restaurantInfo.inspectionScore}
+            Inspection Score: {restaurantInfo.inspectionScore.toFixed(2)}
           </Typography>
           <Divider sx={{ my: 2 }} />
 
