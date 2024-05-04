@@ -172,15 +172,25 @@ const getInspectionScore = async function (req, res) {
     const { resID } = req.query;
 
     try {
-        const avgInspectionScore = await calculateInspectionScore(resID);
-        if (avgInspectionScore === 0) {
-            res.status(404).json({ error: 'Inspection Score not found for the specified restaurant ID' });
-        } else {
-            res.json({
-                restaurant_id: resID,
-                inspectionScore: avgInspectionScore
+        const restaurantQuery = `SELECT inspectionScore FROM restaurant WHERE restaurant_id = ?`;
+        const resResult = await new Promise((resolve, reject) => {
+            connection.query(restaurantQuery, [resID], (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result[0]);
+                }
             });
+        });
+
+        if (!resResult) {
+            return res.status(404).json({ error: 'Restaurant not found.' });
         }
+
+        res.json({
+            restaurant_id: resID,
+            inspectionScore: resResult.inspectionScore
+        });
     } catch (error) {
         console.error(`[getInspectionScore]: ${error}`);
         res.status(500).json({ error: '[getInspectionScore]: Query error' });
@@ -244,27 +254,70 @@ const getCrimeNearRes = async function (req, res) {
 }
 
 /***
- * Route: GET /getDangerScore
- * Get danger score around a given restaurant within given 'inspection_score_radius' (default to 0.5km).
+ * Route: GET /getSafetyScore
+ * Get safety score around a given restaurant within given 'inspection_score_radius' (default to 0.5km).
  * @param {*} req.query.resID
  * 
  */
-const getDangerScore = async function (req, res) {
+const getSafetyScore = async function (req, res) {
     const { resID } = req.query;
-    const radius = inspection_score_radius;
+    // const radius = inspection_score_radius;
 
     try {
-        const avgDangerScore = await calculateDangerScore(resID, radius);
+        const restaurantQuery = `SELECT safetyScore FROM restaurant WHERE restaurant_id = ?`;
+        const resResult = await new Promise((resolve, reject) => {
+            connection.query(restaurantQuery, [resID], (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result[0]);
+                }
+            });
+        });
+
+        if (!resResult) {
+            return res.status(404).json({ error: 'Restaurant not found.' });
+        }
+
         res.json({
             restaurant_id: resID,
-            dangerScore: avgDangerScore
+            safetyScore: resResult.safetyScore
         });
+
+
     } catch (error) {
-        console.error(`[getDangerScore]: ${error}`);
-        res.status(500).json({ error: '[getDangerScore]: Query error' });
+        console.error(`[getSafetyScore]: ${error}`);
+        res.status(500).json({ error: '[getSafetyScore]: Query error' });
     }
 
 }
+
+
+
+// This API is archived! //
+// Changed to /getSafetyScore
+// /***
+//  * Route: GET /getDangerScore
+//  * Get danger score around a given restaurant within given 'inspection_score_radius' (default to 0.5km).
+//  * @param {*} req.query.resID
+//  * 
+//  */
+// const getDangerScore = async function (req, res) {
+//     const { resID } = req.query;
+//     const radius = inspection_score_radius;
+
+//     try {
+//         const avgDangerScore = await calculateDangerScore(resID, radius);
+//         res.json({
+//             restaurant_id: resID,
+//             dangerScore: avgDangerScore
+//         });
+//     } catch (error) {
+//         console.error(`[getDangerScore]: ${error}`);
+//         res.status(500).json({ error: '[getDangerScore]: Query error' });
+//     }
+
+// }
 
 /***
  * Route: GET /getRestaurantInspection
@@ -307,8 +360,88 @@ const getRestaurantInspection = async function (req, res) {
  * @param {*} req.query.page
  * @param {*} req.query.pageSize
  * @param {*} req.query.sortType: overallScore or distance
+ * @param {*} req.query.sortOrder: asc or desc
  */
 const getNearbyRestaurant = async function (req, res) {
+    const { resID, distance, page, pageSize, sortType, sortOrder } = req.query;
+    const offset = (page - 1) * pageSize;
+
+    const haversine = `(6371 * acos(cos(radians(?)) 
+                 * cos(radians(r.restaurant_latitude))
+                 * cos(radians(r.restaurant_longitude) - radians(?))
+                 + sin(radians(?))
+                 * sin(radians(r.restaurant_latitude))))`;
+
+    if (sortType === 'distance' || sortType === 'overallScore') {
+        try {
+            const restaurantQuery = `SELECT restaurant_latitude, restaurant_longitude FROM restaurant WHERE restaurant_id = ?`;
+            const restaurantPosition = await new Promise((resolve, reject) => {
+                connection.query(restaurantQuery, [resID], (err, result) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(result[0]);
+                    }
+                });
+            });
+
+            if (!restaurantPosition) {
+                return res.status(404).json({ error: 'Restaurant not found.' });
+            }
+
+            const totalQuery = `SELECT COUNT(*) AS total
+                                            FROM restaurant AS r
+                                            WHERE r.restaurant_id <> ? AND (${haversine}) < ?`;
+            const totalResult = await new Promise((resolve, reject) => {
+                connection.query(totalQuery, [resID, restaurantPosition.restaurant_latitude, restaurantPosition.restaurant_longitude, restaurantPosition.restaurant_latitude, distance], (err, result) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(result[0].total);
+                    }
+                });
+            });
+
+            // const sortClause = sortType === 'distance' ? 'distance' :
+            //     `((safetyScore + inspectionScore) / 2) ${sortOrder.toUpperCase()}`;
+
+            const sortClause = sortType === 'distance' ? `distance ${sortOrder.toUpperCase()}` :
+                `((safetyScore + inspectionScore) / 2) ${sortOrder.toUpperCase()}`;
+
+            const query = `SELECT r.*, (${haversine}) AS distance,
+                        ((r.safetyScore + r.inspectionScore) / 2) AS overallScore
+                        FROM restaurant AS r
+                        WHERE r.restaurant_id <> ?
+                        HAVING distance < ?
+                        ORDER BY ${sortClause}
+                        LIMIT ? OFFSET ?`;
+
+            connection.query(query, [restaurantPosition.restaurant_latitude, restaurantPosition.restaurant_longitude, restaurantPosition.restaurant_latitude, resID, distance, parseInt(pageSize), offset], (err, results) => {
+                if (err) {
+                    console.error(err);
+                    res.status(500).json({ error: 'Query error' });
+                }
+                res.json(handlePaginationResponse(results, totalResult, parseInt(page), parseInt(pageSize)));
+            });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: 'Server error' });
+        }
+    } else {
+        res.status(500).json({ error: 'Error: Invalid sortType.' })
+    }
+}
+
+/***
+ * Route: GET /getNearbyRestaurant_archive
+ * return the other restaurants around the given restaurant with resID within distance.
+ * @param {*} req.query.resID
+ * @param {*} req.query.distance
+ * @param {*} req.query.page
+ * @param {*} req.query.pageSize
+ * @param {*} req.query.sortType: overallScore or distance
+ */
+const getNearbyRestaurant_archive = async function (req, res) {
     const { resID, distance, page, pageSize, sortType } = req.query;
     const offset = (page - 1) * pageSize;
 
@@ -466,17 +599,32 @@ const getRestaurantOverallScore = async function (req, res) {
     const { resID } = req.query;
 
     try {
-        const inspectionScore = await calculateInspectionScore(resID);
-        const dangerScore = await calculateDangerScore(resID, inspection_score_radius);
+        // const inspectionScore = await calculateInspectionScore(resID);
+        // const dangerScore = await calculateDangerScore(resID, inspection_score_radius);
+
+        const restaurantQuery = `SELECT safetyScore, inspectionScore FROM restaurant WHERE restaurant_id = ?`;
+        const resScores = await new Promise((resolve, reject) => {
+            connection.query(restaurantQuery, [resID], (err, result) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(result[0]);
+                }
+            });
+        });
+
+        if (!resScores) {
+            return res.status(404).json({ error: 'Restaurant not found.' });
+        }
 
         // Calculate overall score using an example weighted formula:
-        const overallScore = (inspectionScore * 0.5) + (dangerScore * 0.5);
+        const overallScore = (resScores.inspectionScore * 0.5) + (resScores.safetyScore * 0.5);
 
         res.json({
             restaurant_id: resID,
             overallScore: overallScore,
-            inspectionScore: inspectionScore,
-            dangerScore: dangerScore
+            inspectionScore: resScores.inspectionScore,
+            safetyScore: resScores.safetyScore
         });
     } catch (error) {
         console.error(`[getRestaurantOverallScore]: ${error}`);
@@ -526,7 +674,7 @@ module.exports = {
     getRestaurantInfo,
     getInspectionScore,
     getCrimeNearRes,
-    getDangerScore,
+    getSafetyScore,
     getRestaurantInspection,
     getNearbyRestaurant,
     getCrimeByID,
@@ -653,10 +801,10 @@ module.exports = {
 
 /**
  * @swagger
- * /getDangerScore:
+ * /getSafetyScore:
  *   get:
- *     summary: Get the danger score around a restaurant.
- *     description: Retrieve the average danger score based on crime data within 0.5 km radius of the restaurant.
+ *     summary: Get the safety score around a restaurant.
+ *     description: Calculated based on crime data within 0.5 km radius of the restaurant.
  *     parameters:
  *       - in: query
  *         name: resID
@@ -666,7 +814,7 @@ module.exports = {
  *           type: integer
  *     responses:
  *       200:
- *         description: The danger score around the restaurant.
+ *         description: The safety score around the restaurant.
  *       500:
  *         description: Internal server error.
  */
@@ -740,6 +888,14 @@ module.exports = {
  *           type: string
  *           enum: [overallScore, distance]
  *           default: distance
+ *       - in: query
+ *         name: sortOrder
+ *         required: false
+ *         description: Sort order, can be asc or desc.
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
  *     responses:
  *       200:
  *         description: A list of nearby restaurants.
@@ -798,15 +954,15 @@ module.exports = {
  *                 overallScore:
  *                   type: number
  *                   description: The calculated overall score of the restaurant.
- *                   example: 13.09145
+ *                   example: 5
  *                 inspectionScore:
  *                   type: number
  *                   description: The calculated overall score of the restaurant.
- *                   example: 8.5
- *                 dangerScore:
+ *                   example: 6
+ *                 safetyScore:
  *                   type: number
  *                   description: The calculated overall score of the restaurant.
- *                   example: 17.6829
+ *                   example: 4
  *       404:
  *         description: No data found for the given restaurant ID.
  *         content:
