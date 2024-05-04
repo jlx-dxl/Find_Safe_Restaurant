@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
-import { Container, Box, Paper, Typography, Button, Menu, MenuItem, Divider, List, ListItem, Card, CardContent} from '@mui/material';
+import { Container, Box, Paper, Typography, Button, Menu, MenuItem, Divider, List, ListItem, Card, CardContent } from '@mui/material';
 import { Dialog, DialogTitle, DialogContent, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { Bar } from 'react-chartjs-2';
@@ -48,14 +48,14 @@ export default function SecurityReportPage() {
       if (crime.crime_type && crime.crime_date.startsWith(selectedYear)) {
         const type = crime.crime_type.charAt(0).toUpperCase() + crime.crime_type.slice(1).toLowerCase();
         if (acc[type] !== undefined) {
-          acc[type] += 1; 
+          acc[type] += 1;
         }
       }
       return acc;
     }, initialCrimeCounts);
-  
+
     setBarPlotData({
-      labels: crimeTypes, 
+      labels: crimeTypes,
       datasets: [{
         label: 'Number of Crimes',
         data: Object.values(crimeCounts),
@@ -64,12 +64,12 @@ export default function SecurityReportPage() {
         borderWidth: 1,
       }]
     });
-};
-  
+  };
+
   const crimeTypes = [
-    'Murder', 'Homicide', 'Robbery', 'Assault', 'Narcotics', 'Prostitution',
-    'Battery', 'Theft', 'Burglary', 'Motor vehicle theft', 'Arson',
-    'Sex offense', 'Criminal damage', 'Weapons violation'
+    'MURDER', 'HOMICIDE', 'ROBBERY', 'ASSAULT', 'BATTERY', 'THEFT', 'WEAPONS VIOLATION', 
+                'MOTOR VEHICLE THEFT', 'CRIMINAL DAMAGE', 'OTHER OFFENSE', 'DECEPTIVE PRACTICE', 
+                'CRIMINAL TRESPASS', 'BURGLARY', 'STALKING', 'NARCOTICS', 'CRIM SEXUAL ASSAULT','OTHER'
   ];
 
   const handleClick = (event, menuType) => {
@@ -87,9 +87,9 @@ export default function SecurityReportPage() {
   };
 
   const handleTypeSelect = (type) => {
-    setSelectedType(type);
+    setSelectedType(type === 'ALL' ? '' : type);
     handleClose('type');
-    fetchAllData(selectedDistance, type); // Changed from fetchCrimeDetails to fetchAllData
+    fetchAllData(selectedDistance, type === 'ALL' ? '' : type, selectedYear); // Changed from fetchCrimeDetails to fetchAllData
   };
 
   const handleYearSelect = (year) => {
@@ -101,7 +101,7 @@ export default function SecurityReportPage() {
   const fetchAllData = async (distance, type, year) => {
     console.log('Fetching data with filters:', { distance, type, year });
     setLoading(true);
-    const distanceInMeters = { '0.1 km': 100, '0.5 km': 500, '1 km': 1000, '5 km': 5000 }[distance];
+    const distanceInMeters = { '0.1 km': 0.1, '0.5 km': 0.5, '1 km': 1, '5 km': 5 }[distance];
 
     let crimeUrl = `/getCrimeNearRes?resID=${restaurant_id}&distance=${distanceInMeters}`;
     if (type) {
@@ -137,6 +137,7 @@ export default function SecurityReportPage() {
         crime_date: new Date(detail.crime_date).toLocaleDateString(),
         crime_type: detail.crime_type.charAt(0).toUpperCase() + detail.crime_type.slice(1).toLowerCase(),
         crime_description: detail.crime_description.charAt(0).toUpperCase() + detail.crime_description.slice(1).toLowerCase(),
+        distance: detail.distance.toFixed(3),
       })));
 
       setTotalCrimes(crimeData.length);
@@ -198,6 +199,9 @@ export default function SecurityReportPage() {
           open={Boolean(anchorEl['type'])}
           onClose={() => handleClose('type')}
         >
+          <MenuItem key="all" onClick={() => handleTypeSelect('ALL')}>
+            ALL
+          </MenuItem>
           {crimeTypes.map((type, index) => (
             <MenuItem key={index} onClick={() => handleTypeSelect(type)}>
               {type}
@@ -323,6 +327,9 @@ export default function SecurityReportPage() {
                           </Typography>
                           <Typography variant="body2">
                             Description: {detail.crime_description}
+                          </Typography>
+                          <Typography variant="body2">
+                            Distance: {detail.distance} km
                           </Typography>
                         </CardContent>
                       </Card>
