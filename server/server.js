@@ -22,12 +22,12 @@ app.get('/searchRestaurant', routes.searchRestaurant);
 app.get('/getRestaurantInfo', routes.getRestaurantInfo);
 app.get('/getInspectionScore', routes.getInspectionScore);
 app.get('/getCrimeNearRes', routes.getCrimeNearRes);
-app.get('/getDangerScore', routes.getDangerScore);
 app.get('/getRestaurantInspection', routes.getRestaurantInspection);
 app.get('/getNearbyRestaurant', routes.getNearbyRestaurant);
 app.get('/getCrimeByID', routes.getCrimeByID);
 app.get('/getRestaurantOverallScore', routes.getRestaurantOverallScore);
 app.get('/getCrimeRankByID', routes.getCrimeRankByID);
+app.get('/getSafetyScore', routes.getSafetyScore);
 
 app.listen(config.server_port, () => {
   console.log(`Server running at http://${config.server_host}:${config.server_port}/`)
