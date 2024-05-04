@@ -5,8 +5,6 @@ import { NavLink } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { useThemeContext } from '../components/themeContext';
 
-import LazyTable from '../components/LazyTable';
-import SongCard from '../components/SongCard';
 const config = require('../config.json');
 
 export default function RestaurantSearchPage() {

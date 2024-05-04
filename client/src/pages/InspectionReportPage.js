@@ -44,7 +44,7 @@ export default function InspectionReportPage() {
       setRestaurantInfo({
         name: infoData.restaurant_name,
         address: infoData.restaurant_address,
-        inspectionScore: infoData.inspectionScore
+        inspectionScore: scoreData.inspectionScore
       });
 
       setInspections(detailsData);
