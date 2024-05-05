@@ -8,4 +8,5 @@ There's a swagger doc for backend APIs. Get launch the swagger api doc:
 3. open `localhost:8080/api-docs`, you could see the swagger doc page
 
 npm install mocha chai sinon proxyquire --save-dev
+
 npm test
