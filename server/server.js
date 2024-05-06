@@ -29,8 +29,12 @@ app.get('/getRestaurantOverallScore', routes.getRestaurantOverallScore);
 app.get('/getCrimeRankByID', routes.getCrimeRankByID);
 app.get('/getSafetyScore', routes.getSafetyScore);
 
-app.listen(config.server_port, () => {
-  console.log(`Server running at http://${config.server_host}:${config.server_port}/`)
-});
+if(process.env.NODE_ENV !== 'test') {
+  console.log("running")
+  app.listen(config.server_port, () => {
+    console.log(`Server running at http://${config.server_host}:${config.server_port}/`)
+  });
+}
+
 
 module.exports = app;

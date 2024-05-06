@@ -432,143 +432,143 @@ const getNearbyRestaurant = async function (req, res) {
     }
 }
 
-/***
- * Route: GET /getNearbyRestaurant_archive
- * return the other restaurants around the given restaurant with resID within distance.
- * @param {*} req.query.resID
- * @param {*} req.query.distance
- * @param {*} req.query.page
- * @param {*} req.query.pageSize
- * @param {*} req.query.sortType: overallScore or distance
- */
-const getNearbyRestaurant_archive = async function (req, res) {
-    const { resID, distance, page, pageSize, sortType } = req.query;
-    const offset = (page - 1) * pageSize;
+// /***
+//  * Route: GET /getNearbyRestaurant_archive
+//  * return the other restaurants around the given restaurant with resID within distance.
+//  * @param {*} req.query.resID
+//  * @param {*} req.query.distance
+//  * @param {*} req.query.page
+//  * @param {*} req.query.pageSize
+//  * @param {*} req.query.sortType: overallScore or distance
+//  */
+// const getNearbyRestaurant_archive = async function (req, res) {
+//     const { resID, distance, page, pageSize, sortType } = req.query;
+//     const offset = (page - 1) * pageSize;
 
-    const haversine = `(6371 * acos(cos(radians(?)) 
-                 * cos(radians(r.restaurant_latitude))
-                 * cos(radians(r.restaurant_longitude) - radians(?))
-                 + sin(radians(?))
-                 * sin(radians(r.restaurant_latitude))))`;
+//     const haversine = `(6371 * acos(cos(radians(?)) 
+//                  * cos(radians(r.restaurant_latitude))
+//                  * cos(radians(r.restaurant_longitude) - radians(?))
+//                  + sin(radians(?))
+//                  * sin(radians(r.restaurant_latitude))))`;
 
-    if (sortType === 'distance') {
-        try {
-            const restaurantQuery = `SELECT restaurant_latitude, restaurant_longitude FROM restaurant WHERE restaurant_id = ?`;
-            const restaurantPosition = await new Promise((resolve, reject) => {
-                connection.query(restaurantQuery, [resID], (err, result) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(result[0]);
-                    }
-                });
-            });
+//     if (sortType === 'distance') {
+//         try {
+//             const restaurantQuery = `SELECT restaurant_latitude, restaurant_longitude FROM restaurant WHERE restaurant_id = ?`;
+//             const restaurantPosition = await new Promise((resolve, reject) => {
+//                 connection.query(restaurantQuery, [resID], (err, result) => {
+//                     if (err) {
+//                         reject(err);
+//                     } else {
+//                         resolve(result[0]);
+//                     }
+//                 });
+//             });
 
-            if (!restaurantPosition) {
-                return res.status(404).json({ error: 'Restaurant not found.' });
-            }
+//             if (!restaurantPosition) {
+//                 return res.status(404).json({ error: 'Restaurant not found.' });
+//             }
 
-            const totalQuery = `SELECT COUNT(*) AS total
-                                            FROM restaurant AS r
-                                            WHERE r.restaurant_id <> ? AND (${haversine}) < ?`;
-            const totalResult = await new Promise((resolve, reject) => {
-                connection.query(totalQuery, [resID, restaurantPosition.restaurant_latitude, restaurantPosition.restaurant_longitude, restaurantPosition.restaurant_latitude, distance], (err, result) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(result[0].total);
-                    }
-                });
-            });
+//             const totalQuery = `SELECT COUNT(*) AS total
+//                                             FROM restaurant AS r
+//                                             WHERE r.restaurant_id <> ? AND (${haversine}) < ?`;
+//             const totalResult = await new Promise((resolve, reject) => {
+//                 connection.query(totalQuery, [resID, restaurantPosition.restaurant_latitude, restaurantPosition.restaurant_longitude, restaurantPosition.restaurant_latitude, distance], (err, result) => {
+//                     if (err) {
+//                         reject(err);
+//                     } else {
+//                         resolve(result[0].total);
+//                     }
+//                 });
+//             });
 
-            const sortClause = 'distance';
-            // const sortClause = sortType === 'distance' ? 'distance' : 'overallRanking DESC, distance';
+//             const sortClause = 'distance';
+//             // const sortClause = sortType === 'distance' ? 'distance' : 'overallRanking DESC, distance';
 
 
-            const query = `SELECT r.*, (${haversine}) AS distance
-                                     FROM restaurant AS r
-                                     WHERE r.restaurant_id <> ?
-                                     HAVING distance < ?
-                                     ORDER BY ${sortClause}
-                                     LIMIT ? OFFSET ?`;
+//             const query = `SELECT r.*, (${haversine}) AS distance
+//                                      FROM restaurant AS r
+//                                      WHERE r.restaurant_id <> ?
+//                                      HAVING distance < ?
+//                                      ORDER BY ${sortClause}
+//                                      LIMIT ? OFFSET ?`;
 
-            connection.query(query, [restaurantPosition.restaurant_latitude, restaurantPosition.restaurant_longitude, restaurantPosition.restaurant_latitude, resID, distance, parseInt(pageSize), offset], (err, results) => {
-                if (err) {
-                    console.error(err);
-                    res.status(500).json({ error: 'Query error' });
-                }
-                res.json(handlePaginationResponse(results, totalResult, parseInt(page), parseInt(pageSize)));
-            });
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Server error' });
-        }
-    } else if (sortType === 'overallScore') {
-        try {
-            const restaurantQuery = `SELECT restaurant_latitude, restaurant_longitude FROM restaurant WHERE restaurant_id = ?`;
-            const restaurantPosition = await new Promise((resolve, reject) => {
-                connection.query(restaurantQuery, [resID], (err, result) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(result[0]);
-                    }
-                });
-            });
+//             connection.query(query, [restaurantPosition.restaurant_latitude, restaurantPosition.restaurant_longitude, restaurantPosition.restaurant_latitude, resID, distance, parseInt(pageSize), offset], (err, results) => {
+//                 if (err) {
+//                     console.error(err);
+//                     res.status(500).json({ error: 'Query error' });
+//                 }
+//                 res.json(handlePaginationResponse(results, totalResult, parseInt(page), parseInt(pageSize)));
+//             });
+//         } catch (error) {
+//             console.error(error);
+//             res.status(500).json({ error: 'Server error' });
+//         }
+//     } else if (sortType === 'overallScore') {
+//         try {
+//             const restaurantQuery = `SELECT restaurant_latitude, restaurant_longitude FROM restaurant WHERE restaurant_id = ?`;
+//             const restaurantPosition = await new Promise((resolve, reject) => {
+//                 connection.query(restaurantQuery, [resID], (err, result) => {
+//                     if (err) {
+//                         reject(err);
+//                     } else {
+//                         resolve(result[0]);
+//                     }
+//                 });
+//             });
 
-            if (!restaurantPosition) {
-                return res.status(404).json({ error: 'Restaurant not found.' });
-            }
-            const query = `SELECT r.restaurant_id, (${haversine}) AS distance
-                            FROM restaurant AS r
-                            WHERE r.restaurant_id <> ?
-                            HAVING distance < ?`;
+//             if (!restaurantPosition) {
+//                 return res.status(404).json({ error: 'Restaurant not found.' });
+//             }
+//             const query = `SELECT r.restaurant_id, (${haversine}) AS distance
+//                             FROM restaurant AS r
+//                             WHERE r.restaurant_id <> ?
+//                             HAVING distance < ?`;
 
-            const nearbyRestaurants = await new Promise((resolve, reject) => {
-                connection.query(query, [restaurantPosition.restaurant_latitude, restaurantPosition.restaurant_longitude, restaurantPosition.restaurant_latitude, resID, distance], (err, results) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(results);
-                    }
-                });
-            });
+//             const nearbyRestaurants = await new Promise((resolve, reject) => {
+//                 connection.query(query, [restaurantPosition.restaurant_latitude, restaurantPosition.restaurant_longitude, restaurantPosition.restaurant_latitude, resID, distance], (err, results) => {
+//                     if (err) {
+//                         reject(err);
+//                     } else {
+//                         resolve(results);
+//                     }
+//                 });
+//             });
 
-            // calculate overallScore
-            const scoredRestaurants = await Promise.all(nearbyRestaurants.map(async (restaurant) => {
-                const inspectionScore = await calculateInspectionScore(restaurant.restaurant_id);
-                const dangerScore = await calculateDangerScore(restaurant.restaurant_id);
-                const overallScore = 0.5 * inspectionScore + 0.5 * dangerScore;
-                return {
-                    ...restaurant,
-                    inspectionScore,
-                    dangerScore,
-                    overallScore
-                };
-            }));
+//             // calculate overallScore
+//             const scoredRestaurants = await Promise.all(nearbyRestaurants.map(async (restaurant) => {
+//                 const inspectionScore = await calculateInspectionScore(restaurant.restaurant_id);
+//                 const dangerScore = await calculateDangerScore(restaurant.restaurant_id);
+//                 const overallScore = 0.5 * inspectionScore + 0.5 * dangerScore;
+//                 return {
+//                     ...restaurant,
+//                     inspectionScore,
+//                     dangerScore,
+//                     overallScore
+//                 };
+//             }));
 
-            // sort
-            scoredRestaurants.sort((a, b) => b.overallScore - a.overallScore);
+//             // sort
+//             scoredRestaurants.sort((a, b) => b.overallScore - a.overallScore);
 
-            // pagination
-            const offset = (page - 1) * pageSize;
-            const paginatedResults = scoredRestaurants.slice(offset, offset + parseInt(pageSize));
+//             // pagination
+//             const offset = (page - 1) * pageSize;
+//             const paginatedResults = scoredRestaurants.slice(offset, offset + parseInt(pageSize));
 
-            // res.json({
-            //     total: scoredRestaurants.length,
-            //     restaurants: paginatedResults,
-            //     page,
-            //     pageSize
-            // });
-            res.json(handlePaginationResponse(paginatedResults, scoredRestaurants.length, parseInt(page), parseInt(pageSize)));
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Server error' });
-        }
-    } else {
-        res.status(500).json({ error: 'Error: Invalid sortType.' })
-    }
-}
+//             // res.json({
+//             //     total: scoredRestaurants.length,
+//             //     restaurants: paginatedResults,
+//             //     page,
+//             //     pageSize
+//             // });
+//             res.json(handlePaginationResponse(paginatedResults, scoredRestaurants.length, parseInt(page), parseInt(pageSize)));
+//         } catch (error) {
+//             console.error(error);
+//             res.status(500).json({ error: 'Server error' });
+//         }
+//     } else {
+//         res.status(500).json({ error: 'Error: Invalid sortType.' })
+//     }
+// }
 
 /***
  * Route: GET /getCrimeByID
