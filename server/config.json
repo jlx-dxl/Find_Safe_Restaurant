@@ -4,6 +4,6 @@
   "rds_user": "admin",
   "rds_password": "upenncis5500",
   "rds_db": "FOOD_CRIME_CHICAGO",
-  "server_host": "localhost",
-  "server_port": "8080"
+  "server_host": "0.0.0.0",
+  "server_port": "3000"
 }

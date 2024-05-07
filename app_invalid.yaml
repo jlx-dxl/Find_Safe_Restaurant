@@ -1,0 +1,38 @@
+runtime: nodejs20
+env: standard
+automatic_scaling:
+  min_idle_instances: automatic
+
+# 前端服务
+service: frontend
+handlers:
+  - url: /
+    static_files: client/build/index.html
+    upload: client/build/index.html
+  - url: /(.*)
+    static_files: client/build/\1
+    upload: client/build/(.*)
+
+# 后端服务
+service: backend
+handlers:
+  - url: /searchRestaurant
+    script: auto
+  - url: /getRestaurantInfo
+    script: auto
+  - url: /getInspectionScore
+    script: auto
+  - url: /getCrimeNearRes
+    script: auto
+  - url: /getRestaurantInspection
+    script: auto
+  - url: /getNearbyRestaurant
+    script: auto
+  - url: /getCrimeByID
+    script: auto
+  - url: /getRestaurantOverallScore
+    script: auto
+  - url: /getCrimeRankByID
+    script: auto
+  - url: /getSafetyScore
+    script: auto
