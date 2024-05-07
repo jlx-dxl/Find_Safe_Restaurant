@@ -69,8 +69,8 @@ export default function RestaurantSearchPage() {
         backgroundColor: themeMode === 'dark' ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)',
         borderRadius: 2,
         padding: 4,
-        marginTop: 0, // Adjust spacing as needed
-        marginBottom: 8, // Adjust spacing as needed
+        marginTop: 0, 
+        marginBottom: 8, 
         overflow: 'hidden',
       }}>
         <Typography
@@ -103,7 +103,6 @@ export default function RestaurantSearchPage() {
             </Button>
           </Stack>
           
-          {/* Results */}
           {loading ? (
             <Typography>Loading...</Typography>
           ) : (
@@ -134,12 +133,11 @@ export default function RestaurantSearchPage() {
             </Stack>
           )}
 
-          {/* Pagination */}
           <Pagination count={totalPages} page={currentPage} onChange={handlePageChange} sx={{
             display: searchResults.length ? 'flex' : 'none',
             justifyContent: 'center',
             mt: 2,
-            mb: 4, // Adjust bottom spacing as needed
+            mb: 4,
           }} />
         </Stack>
       </Container>
