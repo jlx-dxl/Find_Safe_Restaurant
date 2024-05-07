@@ -42,5 +42,10 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "jest": "^27.5.1",
+    "mysql": "^2.18.1",
+    "supertest": "^7.0.0"
   }
 }
