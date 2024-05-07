@@ -35,12 +35,10 @@ export default function InspectionReportPage() {
       const scoreResponse = await fetch(`/getInspectionScore?resID=${restaurant_id}`);
       const detailsResponse = await fetch(`/getRestaurantInspection?resID=${restaurant_id}&year=${selectedYear}`);
 
-      // Once all promises are resolved, convert to JSON
       const infoData = await infoResponse.json();
       const scoreData = await scoreResponse.json();
       const detailsData = await detailsResponse.json();
 
-      // Update state with the fetched data
       setRestaurantInfo({
         name: infoData.restaurant_name,
         address: infoData.restaurant_address,
@@ -50,11 +48,9 @@ export default function InspectionReportPage() {
       setInspections(detailsData);
       updateChartData(detailsData);
 
-      // Stop loading once data is set
       setLoading(false);
     } catch (error) {
       console.error('Error fetching data:', error);
-      // Stop loading even if there is an error
       setLoading(false);
     }
   };
@@ -74,7 +70,7 @@ export default function InspectionReportPage() {
       labels: Object.keys(counts),
       datasets: [{
         data: Object.values(counts),
-        backgroundColor: ['green', 'yellow', 'red'], // Colors for Pass, Conditional, Fail
+        backgroundColor: ['green', 'yellow', 'red'], 
       }]
     });
   };
