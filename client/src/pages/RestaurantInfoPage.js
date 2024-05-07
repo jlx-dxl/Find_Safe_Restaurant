@@ -50,7 +50,7 @@ export default function RestaurantInfoPage() {
                     inspectionScore: data.inspectionScore.toFixed(2),
                     securityScore: data.safetyScore.toFixed(2),
                 }));
-                setIsLoading(false); // Set loading to false after receiving all data
+                setIsLoading(false); 
             })
             .catch(error => {
                 console.error('Error fetching scores:', error);
@@ -64,7 +64,7 @@ export default function RestaurantInfoPage() {
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            height: '100vh', // Adjust the height of the image as needed
+            height: '100vh', 
             display: 'flex',
         }}>
             <Container maxWidth="md" sx={{ mt: 4 }}>

@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-// Define the detailed theme options for both light and dark themes
 const lightThemeOptions = {
   palette: {
     mode: 'light',
     primary: {
-      main:  "#3f5eb5", // Corrected to your specific navbar color
+      main:  "#3f5eb5", 
     },
     secondary: {
       main: "#ffffff",
@@ -36,7 +35,6 @@ const lightThemeOptions = {
   components: {
     MuiButton: { defaultProps: { size: "small" } },
     MuiCheckbox: { defaultProps: { size: "small" } },
-    // Additional component defaults...
   },
 };
 
@@ -72,11 +70,10 @@ const darkThemeOptions = {
   components: {
     MuiButton: { defaultProps: { size: "small" } },
     MuiCheckbox: { defaultProps: { size: "small" } },
-    // Add other components' defaults here...
   },
 };
 
-// Context setup
+
 const ThemeContext = createContext();
 
 export function useThemeContext() {

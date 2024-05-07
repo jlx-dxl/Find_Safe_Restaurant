@@ -30,7 +30,7 @@ function NavText({ href, text, isMain }) {
 }
 
 export default function NavBar() {
-  const { toggleTheme } = useThemeContext(); // 确保这里的名称与你在 Provider 中提供的名称一致
+  const { toggleTheme } = useThemeContext(); 
 
   return (
     <AppBar position='static'>
@@ -40,7 +40,7 @@ export default function NavBar() {
             edge="start"
             color="inherit"
             aria-label="toggle theme"
-            onClick={toggleTheme} // 使用解构得到的函数
+            onClick={toggleTheme}
             sx={{ mr: 2 }}
           >
             <Brightness4Icon />

@@ -60,7 +60,7 @@ export default function RestaurantSearchPage() {
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
       } : {}),
-      minHeight: '100vh', // Adjust the height of the image as needed
+      minHeight: '100vh', 
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
@@ -69,8 +69,8 @@ export default function RestaurantSearchPage() {
         backgroundColor: themeMode === 'dark' ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)',
         borderRadius: 2,
         padding: 4,
-        marginTop: 0, // Adjust spacing as needed
-        marginBottom: 8, // Adjust spacing as needed
+        marginTop: 0,
+        marginBottom: 8, 
         overflow: 'hidden',
       }}>
         <Typography
@@ -139,7 +139,7 @@ export default function RestaurantSearchPage() {
             display: searchResults.length ? 'flex' : 'none',
             justifyContent: 'center',
             mt: 2,
-            mb: 4, // Adjust bottom spacing as needed
+            mb: 4, 
           }} />
         </Stack>
       </Container>
