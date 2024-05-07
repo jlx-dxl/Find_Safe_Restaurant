@@ -16,7 +16,7 @@ export default function NearByRestaurantPage() {
     useEffect(() => {
         const fetchNearbyRestaurants = async () => {
             try {
-                const response = await fetch(`http://localhost:8080/getNearbyRestaurant?resID=${restaurant_id}&distance=${distanceFilter}&page=${page}&pageSize=${pageSize}&sortType=${sortType}&sortOrder=${sortOrder}`);
+                const response = await fetch(`/getNearbyRestaurant?resID=${restaurant_id}&distance=${distanceFilter}&page=${page}&pageSize=${pageSize}&sortType=${sortType}&sortOrder=${sortOrder}`);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
