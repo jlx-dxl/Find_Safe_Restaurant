@@ -1,0 +1,39 @@
+runtime: nodejs20
+env: standard
+automatic_scaling:
+  min_idle_instances: automatic
+
+handlers:
+  # API Handlers
+  - url: /searchRestaurant
+    script: auto
+  - url: /getRestaurantInfo
+    script: auto
+  - url: /getInspectionScore
+    script: auto
+  - url: /getCrimeNearRes
+    script: auto
+  - url: /getRestaurantInspection
+    script: auto
+  - url: /getNearbyRestaurant
+    script: auto
+  - url: /getCrimeByID
+    script: auto
+  - url: /getRestaurantOverallScore
+    script: auto
+  - url: /getCrimeRankByID
+    script: auto
+  - url: /getSafetyScore
+    script: auto
+  
+  # 静态文件
+  - url: /(.*\.(html|css|js|json|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot))$
+    static_files: client/build/\1
+    upload: client/build/(.*\.(html|css|js|json|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot))$
+    secure: always
+
+  # 捕捉所有其他请求并发送到React前端应用的入口点
+  - url: /.*
+    static_files: client/build/index.html
+    upload: client/build/index.html
+    secure: always

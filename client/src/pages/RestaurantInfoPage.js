@@ -15,7 +15,7 @@ export default function RestaurantInfoPage() {
     });
 
     useEffect(() => {
-        fetch(`http://localhost:8080/getRestaurantInfo?resID=${restaurant_id}`)
+        fetch(`/getRestaurantInfo?resID=${restaurant_id}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -34,7 +34,7 @@ export default function RestaurantInfoPage() {
                 navigate('/error');
             });
 
-        fetch(`http://localhost:8080/getRestaurantOverallScore?resID=${restaurant_id}`)
+        fetch(`/getRestaurantOverallScore?resID=${restaurant_id}`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
