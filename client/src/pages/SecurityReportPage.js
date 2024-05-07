@@ -17,7 +17,7 @@ export default function SecurityReportPage() {
   const [crimeDetails, setCrimeDetails] = useState([]);
   const [loadingCrimeDetails, setLoadingCrimeDetails] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [selectedYear, setSelectedYear] = useState('2016'); // Default to 2016
+  const [selectedYear, setSelectedYear] = useState('2016'); 
   const [totalCrimes, setTotalCrimes] = useState(0);
   const [isTypeAnalysisOpen, setIsTypeAnalysisOpen] = useState(false);
 
@@ -98,19 +98,19 @@ export default function SecurityReportPage() {
   const handleDistanceSelect = (distance) => {
     setSelectedDistance(distance);
     handleClose('distance');
-    fetchAllData(distance, selectedType); // Changed from fetchCrimeDetails to fetchAllData
+    fetchAllData(distance, selectedType); 
   };
 
   const handleTypeSelect = (type) => {
     setSelectedType(type === 'ALL' ? '' : type);
     handleClose('type');
-    fetchAllData(selectedDistance, type === 'ALL' ? '' : type, selectedYear); // Changed from fetchCrimeDetails to fetchAllData
+    fetchAllData(selectedDistance, type === 'ALL' ? '' : type, selectedYear); 
   };
 
   const handleYearSelect = (year) => {
     setSelectedYear(year);
     handleClose('year');
-    fetchAllData(selectedDistance, selectedType, year); // Now includes year in the fetch
+    fetchAllData(selectedDistance, selectedType, year);
   };
 
   const fetchAllData = async (distance, type, year) => {
@@ -166,7 +166,6 @@ export default function SecurityReportPage() {
   };
 
   useEffect(() => {
-    // Fetch all initial data on component mount with the default or previously selected values
     fetchAllData(selectedDistance, selectedType, selectedYear);
   }, [selectedDistance, selectedType, selectedYear]); // Include selectedYear in the dependency array
 
@@ -290,7 +289,6 @@ export default function SecurityReportPage() {
             </IconButton>
           </DialogTitle>
           <DialogContent>
-            {/* Render the bar chart here */}
             <Bar
               key={selectedYear}
               data={barPlotData}
