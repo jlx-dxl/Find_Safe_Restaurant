@@ -167,10 +167,10 @@ export default function SecurityReportPage() {
 
   useEffect(() => {
     fetchAllData(selectedDistance, selectedType, selectedYear);
-  }, [selectedDistance, selectedType, selectedYear]); // Include selectedYear in the dependency array
+  }, [selectedDistance, selectedType, selectedYear]);
 
   if (loading) {
-    return <div>Loading...</div>; // Display loading indicator while data is fetching
+    return <div>Loading...</div>; 
   }
 
 
@@ -243,7 +243,6 @@ export default function SecurityReportPage() {
             </MenuItem>
           ))}
         </Menu>
-        {/* This Typography below will now be the only one that displays the selected filters */}
         <Box sx={{ mt: 2 }}>
           {selectedDistance && (
             <Typography variant="body1" sx={{ color: theme.palette.text.secondary }}>
@@ -274,7 +273,7 @@ export default function SecurityReportPage() {
         </Button>
         <Dialog open={isTypeAnalysisOpen} onClose={handleCloseTypeAnalysis} fullWidth={true} maxWidth="md">
           <DialogTitle>
-            Type Analysis - {selectedYear}  {/* Here is the change */}
+            Type Analysis - {selectedYear}  
             <IconButton
               aria-label="close"
               onClick={handleCloseTypeAnalysis}

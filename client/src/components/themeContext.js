@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-// Define the detailed theme options for both light and dark themes
 const lightThemeOptions = {
   palette: {
     mode: 'light',
@@ -74,7 +73,7 @@ const darkThemeOptions = {
   },
 };
 
-// Context setup
+
 const ThemeContext = createContext();
 
 export function useThemeContext() {

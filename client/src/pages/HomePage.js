@@ -60,7 +60,7 @@ export default function RestaurantSearchPage() {
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
       } : {}),
-      minHeight: '100vh', // Adjust the height of the image as needed
+      minHeight: '100vh', 
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
@@ -137,7 +137,7 @@ export default function RestaurantSearchPage() {
             display: searchResults.length ? 'flex' : 'none',
             justifyContent: 'center',
             mt: 2,
-            mb: 4,
+            mb: 4, // Adjust bottom spacing as needed
           }} />
         </Stack>
       </Container>

@@ -6,7 +6,7 @@ import { Pie } from 'react-chartjs-2';
 import 'chart.js/auto';
 
 export default function InspectionReportPage() {
-  const {restaurant_id} = useParams();  // Using a hardcoded restaurant ID for demonstration
+  const {restaurant_id} = useParams();  
   const theme = useTheme();
   const [restaurantInfo, setRestaurantInfo] = useState({
     name: 'Loading...',
@@ -48,9 +48,11 @@ export default function InspectionReportPage() {
       setInspections(detailsData);
       updateChartData(detailsData);
 
+      // Stop loading once data is set
       setLoading(false);
     } catch (error) {
       console.error('Error fetching data:', error);
+      // Stop loading even if there is an error
       setLoading(false);
     }
   };
@@ -94,7 +96,7 @@ export default function InspectionReportPage() {
           my: 2,
           fontStyle: 'italic',
           color: theme.palette.text.secondary,
-          paddingLeft: '16px' // Aligns text with the button text assuming default padding in theme
+          paddingLeft: '16px' 
         }}
       >
         {selectedYear ? `Year: ${selectedYear}` : 'No year selected'}
