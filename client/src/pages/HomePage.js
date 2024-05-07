@@ -137,7 +137,7 @@ export default function RestaurantSearchPage() {
             display: searchResults.length ? 'flex' : 'none',
             justifyContent: 'center',
             mt: 2,
-            mb: 4, // Adjust bottom spacing as needed
+            mb: 4, 
           }} />
         </Stack>
       </Container>
