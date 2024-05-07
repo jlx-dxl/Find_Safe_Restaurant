@@ -58,7 +58,7 @@ export default function NavBar() {
   // );
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token'); // Retrieve from local storage
+    const token = localStorage.getItem('access_token'); 
     if (token) {
       axios.get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${token}`, {
         headers: {
@@ -103,7 +103,7 @@ useEffect(() => {
   };
   
 
-  const { toggleTheme } = useThemeContext(); // 确保这里的名称与你在 Provider 中提供的名称一致
+  const { toggleTheme } = useThemeContext();
 
   const responseMessage = (response) => {
     console.log(response);
@@ -120,7 +120,7 @@ useEffect(() => {
     //         edge="start"
     //         color="inherit"
     //         aria-label="toggle theme"
-    //         onClick={toggleTheme} // 使用解构得到的函数
+    //         onClick={toggleTheme} 
     //         sx={{ mr: 2 }}
     //       >
     //         <Brightness4Icon />
