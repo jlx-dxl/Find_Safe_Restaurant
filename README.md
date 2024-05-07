@@ -47,6 +47,10 @@ To get a local copy up and running follow these simple steps.
    ```
 
 ## Backend Swagger
+First, go into backend folder '/server'
+```bash
+cd server
+```
 
 There's a swagger doc for backend APIs. Get launch the swagger api doc:
 1. `npm install`
