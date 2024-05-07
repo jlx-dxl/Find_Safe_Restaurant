@@ -148,6 +148,7 @@ useEffect(() => {
 
     <AppBar position='static'>
       <Container maxWidth='xl'>
+{/* <<<<<<< HEAD */}
         <Toolbar disableGutters sx={{ display: 'flex', justifyContent: 'space-between' }}>
           {/* Theme Toggle and Navigation */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
