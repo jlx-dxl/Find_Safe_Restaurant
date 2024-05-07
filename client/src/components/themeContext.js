@@ -6,7 +6,7 @@ const lightThemeOptions = {
   palette: {
     mode: 'light',
     primary: {
-      main:  "#3f5eb5", // Corrected to your specific navbar color
+      main:  "#3f5eb5",
     },
     secondary: {
       main: "#ffffff",
@@ -36,7 +36,6 @@ const lightThemeOptions = {
   components: {
     MuiButton: { defaultProps: { size: "small" } },
     MuiCheckbox: { defaultProps: { size: "small" } },
-    // Additional component defaults...
   },
 };
 
@@ -72,7 +71,6 @@ const darkThemeOptions = {
   components: {
     MuiButton: { defaultProps: { size: "small" } },
     MuiCheckbox: { defaultProps: { size: "small" } },
-    // Add other components' defaults here...
   },
 };
 
