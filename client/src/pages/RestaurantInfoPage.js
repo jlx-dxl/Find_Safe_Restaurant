@@ -15,7 +15,6 @@ export default function RestaurantInfoPage() {
     });
 
     useEffect(() => {
-        // Fetch basic restaurant information
         fetch(`http://localhost:8080/getRestaurantInfo?resID=${restaurant_id}`)
             .then(response => {
                 if (!response.ok) {
@@ -35,7 +34,6 @@ export default function RestaurantInfoPage() {
                 navigate('/error');
             });
 
-        // Fetch the overall score and other scores
         fetch(`http://localhost:8080/getRestaurantOverallScore?resID=${restaurant_id}`)
             .then(response => {
                 if (!response.ok) {

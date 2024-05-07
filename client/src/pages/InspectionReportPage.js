@@ -35,7 +35,6 @@ export default function InspectionReportPage() {
       const scoreResponse = await fetch(`/getInspectionScore?resID=${restaurant_id}`);
       const detailsResponse = await fetch(`/getRestaurantInspection?resID=${restaurant_id}&year=${selectedYear}`);
 
-
       const infoData = await infoResponse.json();
       const scoreData = await scoreResponse.json();
       const detailsData = await detailsResponse.json();
@@ -49,10 +48,11 @@ export default function InspectionReportPage() {
       setInspections(detailsData);
       updateChartData(detailsData);
 
-
+      // Stop loading once data is set
       setLoading(false);
     } catch (error) {
-
+      console.error('Error fetching data:', error);
+      // Stop loading even if there is an error
       setLoading(false);
     }
   };

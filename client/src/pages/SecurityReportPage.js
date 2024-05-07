@@ -110,7 +110,7 @@ export default function SecurityReportPage() {
   const handleYearSelect = (year) => {
     setSelectedYear(year);
     handleClose('year');
-    fetchAllData(selectedDistance, selectedType, year); 
+    fetchAllData(selectedDistance, selectedType, year);
   };
 
   const fetchAllData = async (distance, type, year) => {
@@ -288,7 +288,6 @@ export default function SecurityReportPage() {
             </IconButton>
           </DialogTitle>
           <DialogContent>
-            {/* Render the bar chart here */}
             <Bar
               key={selectedYear}
               data={barPlotData}
