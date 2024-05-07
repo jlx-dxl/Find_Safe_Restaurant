@@ -37,16 +37,20 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
 });
 
-
 const PORT = process.env.PORT || config.server_port;
-const HOST = '0.0.0.0';
+// const HOST = '0.0.0.0';
+// const HOST = process.env.HOST || "0.0.0.0";
 
 if(process.env.NODE_ENV !== 'test') {
   // app.listen(config.server_port, () => {
   //   console.log(`Server running at http://${config.server_host}:${config.server_port}/`)
   // });
-  app.listen(PORT, HOST, () => {
-    console.log(`Server running at http://${config.server_host}:${config.server_port}/`)
+  // app.listen(PORT, HOST, () => {
+  //   console.log(`Server running at http://${config.server_host}:${config.server_port}/`)
+  // });
+
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running at port: ${PORT}`)
   });
 }
 
