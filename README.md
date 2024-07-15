@@ -1,6 +1,8 @@
 # Find Safe Restaurant
 
 > Hosted here: https://find-restaurant-for-chicago.ue.r.appspot.com/
+>
+> Video Demo: https://lucien-jia.notion.site/DataBase-1ede821df18f4f66ad69d504a9ce974e
 
 ## Project Description
 The "Find Safe Restaurant" application helps users find restaurants that meet specific health and safety standards. This application fetches restaurant data, including health inspection scores and user reviews, and displays them in a user-friendly format. Users can search for restaurants by location, cuisine, and safety ratings.
